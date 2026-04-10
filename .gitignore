@@ -1,0 +1,10 @@
+# Binaries
+quest-log
+
+# Data
+*.db
+*.csv
+*.env
+
+# OS metadata
+.DS_Store
