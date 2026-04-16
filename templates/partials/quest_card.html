@@ -1,0 +1,84 @@
+{{ define "quest_card" }}
+<style>
+    /* Static CSS: No Go tags here means NO MORE EDITOR ERRORS */
+    .quest-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .quest-accent-bar {
+        width: 6px;
+        height: 40px;
+        border-radius: 3px;
+        margin-right: 1rem;
+        /* This uses the variable we set in the HTML below */
+        background-color: var(--dynamic-cat-color);
+    }
+    .quest-title { margin: 0; font-size: 1.1rem; color: #111; }
+    .quest-meta { font-size: 0.85rem; color: #666; margin-top: 4px; }
+    .xp-text { color: #ca8a04; font-weight: bold; }
+    
+    .complete-btn {
+        background: var(--primary-green);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: opacity 0.2s;
+    }
+    .complete-btn:hover { opacity: 0.9; }
+
+    .badge-must {
+        background: #fee2e2;
+        color: #991b1b;
+        font-size: 0.7rem;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        margin-left: 8px;
+    }
+</style>
+
+<div class="quest-card" style="--dynamic-cat-color: {{ .CategoryColor }};">
+    <div style="display: flex; align-items: center;">
+        
+        <div class="quest-accent-bar"></div>
+        
+        <div>
+            <div style="display: flex; align-items: center;">
+                <h3 class="quest-title">{{ .Title }}</h3>
+                {{ if .IsNonNegotiable }}
+                    <span class="badge-must">Must Do</span>
+                {{ end }}
+            </div>
+            
+            <div class="quest-meta">
+                <span style="font-weight: bold; color: var(--dynamic-cat-color);">{{ .CategoryName }}</span>
+                &bull; 
+                <span>
+                    {{ if eq .Difficulty 1 }}🐑 Easy
+                    {{ else if eq .Difficulty 2 }}🐑🐑 Medium
+                    {{ else if eq .Difficulty 3 }}🐏 Hard
+                    {{ end }}
+                </span>
+                &bull; 
+                <span class="xp-text">+{{ .BaseXP }} XP</span>
+            </div>
+        </div>
+    </div>
+
+    <form action="/quests/complete" method="POST">
+        <input type="hidden" name="quest_id" value="{{ .ID }}">
+        <button type="submit" class="complete-btn">Complete</button>
+    </form>
+</div>
+{{ end }}

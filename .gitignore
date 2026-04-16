@@ -3,6 +3,8 @@ quest-log
 
 # Data
 *.db
+*.db-shm
+*.db-wal
 *.csv
 *.env
 

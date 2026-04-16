@@ -1,0 +1,51 @@
+{{ define "content" }}
+<style>
+    .pasture-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 2rem;
+    }
+    .bad-brain-btn {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .bad-brain-btn:hover { background: #fee2e2; }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border: 2px dashed #bbf7d0;
+        border-radius: 12px;
+    }
+</style>
+
+<div class="pasture-header">
+    <div>
+        <h2 style="margin: 0; font-size: 1.5rem;">Today's Flock</h2>
+        <p style="color: #666; font-size: 0.9rem; margin-top: 4px;">
+            Complete quests to herd sheep into your weekly corral.
+        </p>
+    </div>
+    <button class="bad-brain-btn">🚨 Bad Brain Day</button>
+</div>
+
+<div class="quest-list">
+    {{ range . }}
+        {{ template "quest_card" . }}
+    {{ else }}
+        <div class="empty-state">
+            <span style="font-size: 3rem;">🌤️</span>
+            <h3 style="margin: 1rem 0 0.5rem 0;">The pasture is clear!</h3>
+            <p style="color: #666; margin: 0;">You've herded all the sheep. Enjoy the rest of your day.</p>
+        </div>
+    {{ end }}
+</div>
+{{ end }}

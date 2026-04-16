@@ -1,0 +1,73 @@
+{{ define "base" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quest Log: {{ block "title" . }}System{{ end }}</title>
+    <style>
+        :root {
+            --bg-color: #f0fdf4;
+            --primary-green: #166534;
+            --border-color: #dcfce7;
+            --card-bg: #ffffff;
+        }
+        body { 
+            font-family: sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh;
+        }
+        nav { 
+            background: white; 
+            border-bottom: 2px solid var(--border-color); 
+            padding: 1rem; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            width: 100%; 
+        }
+        .nav-flex { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .nav-links a { 
+            margin-left: 1rem; 
+            text-decoration: none; 
+            color: var(--primary-green); 
+            font-weight: bold;
+        }
+        main { flex-grow: 1; padding: 2rem 1rem; }
+        footer { 
+            text-align: center; 
+            padding: 1rem; 
+            font-size: 0.8rem; 
+            color: #888; 
+            background: white; 
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container nav-flex">
+            <div style="font-size: 1.2rem; font-weight: bold;">🐑 The Pasture</div>
+            <div class="nav-links">
+                <a href="/">Active</a>
+                <a href="/newquest">New</a>
+                <a href="/corral">Corral</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {{ template "content" . }}
+    </main>
+
+    <footer>Milford Node • 2026</footer>
+</body>
+</html>
+{{ end }}
