@@ -17,3 +17,12 @@ type QuestResponse struct {
 	Status          string    `json:"status"`
 	CreatedAt       time.Time `json:"created_at"`
 }
+
+// ----- Defines a Category -----
+type Category struct {
+	ID        int    `json:"id"`
+	OwnerID   int    `json:"owner_id"`
+	Name      string `json:"name"`
+	ColorHex  string `json:"color_hex"`
+	IsArchived bool   `json:"is_archived"`
+}

@@ -3,11 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
-
-	// The blank identifier '_' is used here because we don't call this package's functions directly.
-	// We just need it to run its 'init()' function to register itself with Go's 'database/sql' package.
 	_ "github.com/mattn/go-sqlite3"
 )
+var DB *sql.DB // Global pointer to the database connection
 
 // Connect opens a connection to the SQLite database, configures it for production use,
 // and ensures all required tables exist.
@@ -42,6 +40,26 @@ func Connect() (*sql.DB, error) {
 
 	return db, nil
 }
+
+
+func GetCategories(db *sql.DB) ([]Category, error) {
+    rows, err := db.Query("SELECT id, name FROM categories WHERE is_archived = 0 ORDER BY name ASC")
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var categories []Category
+    for rows.Next() {
+        var c Category
+        if err := rows.Scan(&c.ID, &c.Name); err != nil {
+            return nil, err
+        }
+        categories = append(categories, c)
+    }
+    return categories, nil
+}
+
 
 // createTables executes the schema creation. Using "IF NOT EXISTS" ensures this
 // only runs the first time the app boots, or if a table was accidentally deleted.

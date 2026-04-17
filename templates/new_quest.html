@@ -1,0 +1,71 @@
+{{ define "content" }}
+<style>
+    .form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; font-weight: bold; margin-bottom: 0.5rem; color: var(--primary-green); }
+    input, select, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+    .submit-btn {
+        background: var(--primary-green);
+        color: white;
+        border: none;
+        padding: 1rem;
+        width: 100%;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+</style>
+
+<div class="form-container">
+    <h2 style="text-align: center; margin-top: 0;">⚒️ The Quest Forge</h2>
+    <form action="/quests/create" method="POST">
+        <div class="form-group">
+            <label for="title">Quest Title</label>
+            <input type="text" id="title" name="title" placeholder="e.g., Clean the Raspberry Pi pins" required>
+        </div>
+
+        <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" name="category_id">
+                {{ range . }}
+                    <option value="{{ .ID }}">{{ .Name }}</option>
+                {{ end }}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="difficulty">Herd Size (Difficulty)</label>
+            <select id="difficulty" name="difficulty">
+                <option value="1">🦆 Duck (Easy/Quick)</option>
+                <option value="2">🐑 Sheep (Medium/Standard)</option>
+                <option value="3">🐄 Cow (Hard/Deep Work)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="base_xp">Reward (XP)</label>
+            <select id="base_xp" name="base_xp">
+                <option value="10">10 XP (Standard)</option>
+                <option value="25">25 XP (Significant)</option>
+                <option value="50">50 XP (Epic/Milestone)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="submit-btn">Release into Pasture</button>
+    </form>
+</div>
+{{ end }}
