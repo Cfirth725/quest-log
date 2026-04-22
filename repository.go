@@ -1,9 +1,9 @@
 package main
 
 import (
-    "fmt"
-	"database/sql"
 	"context"
+	"database/sql"
+	"fmt"
 )
 
 // GetActiveQuests fetches all pending quests for a user, including shared household quests.
@@ -49,7 +49,6 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestRespon
 
 	return activeQuests, nil
 }
-
 
 // CompleteQuest handles the transactional logic of marking a task done,
 // calculating XP, updating streaks, and writing to the historical ledger.

@@ -20,9 +20,9 @@ type QuestResponse struct {
 
 // ----- Defines a Category -----
 type Category struct {
-	ID        int    `json:"id"`
-	OwnerID   int    `json:"owner_id"`
-	Name      string `json:"name"`
-	ColorHex  string `json:"color_hex"`
+	ID         int    `json:"id"`
+	OwnerID    int    `json:"owner_id"`
+	Name       string `json:"name"`
+	ColorHex   string `json:"color_hex"`
 	IsArchived bool   `json:"is_archived"`
 }
