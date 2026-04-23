@@ -52,7 +52,7 @@
     <form action="/quests/create" method="POST">
         <div class="form-group">
             <label for="title">Quest Title</label>
-            <input type="text" id="title" name="title" placeholder="e.g., Clean the Raspberry Pi pins" required>
+            <input type="text" id="title" name="title" placeholder="Enter New Quest Here" required>
         </div>
 
         <div class="form-group">
@@ -75,10 +75,10 @@
             <small>The XP reward will be calculated automatically upon completion.</small>
         </div>
 
-        <div class="form-group">
-            <label class="checkbox-label">
-                <input type="checkbox" name="is_non_negotiable" value="1">
-                <span>This is a Non-Negotiable (Priority Shield)</span>
+        <div style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+            <input type="checkbox" id="is_non_negotiable" name="is_non_negotiable" value="1" style="width: 20px; height: 20px; cursor: pointer;">
+            <label for="is_non_negotiable" style="font-weight: bold; cursor: pointer; color: #004d26; margin-bottom: 0;">
+            Check This Box if Quest is a Non-Negotiable!
             </label>
         </div>
         <button type="submit" class="submit-btn">Forge Quest</button>
