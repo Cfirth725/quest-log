@@ -1,5 +1,7 @@
 {{ define "content" }}
 <style>
+    /* Quest Forge Layout
+       Centrally aligned container for structured data entry. */
     .form-container {
         background: white;
         padding: 2rem;
@@ -7,16 +9,27 @@
         border: 1px solid var(--border-color);
         max-width: 500px;
         margin: 0 auto;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05)
     }
+
     .form-group { margin-bottom: 1.5rem; }
-    label { display: block; font-weight: bold; margin-bottom: 0.5rem; color: var(--primary-green); }
+
+    label { 
+        display: block; 
+        font-weight: bold; 
+        margin-bottom: 0.5rem; 
+        color: var(--primary-green); 
+    }
+
     input, select, textarea {
         width: 100%;
         padding: 0.75rem;
         border: 1px solid #ddd;
         border-radius: 6px;
-        font-size: 1rem;
+        font-size: 1rem; 
+        box-sizing: border-box; /* Ensures padding doesn't break layout */
     }
+
     .submit-btn {
         background: var(--primary-green);
         color: white;
@@ -27,32 +40,45 @@
         font-weight: bold;
         cursor: pointer;
         font-size: 1.1rem;
-    
-    .checkbox-label {
-        display: flex;
-        align-items: center; 
-        gap: 8px;
-        cursor: pointer;
-        margin-top: 10px;
-        /* Using the green from your footer for consistency */
-        color: #004d26; 
-        font-family: sans-serif;
+        transition: background 0.2s;
     }
 
-    .checkbox-label input {
-        margin: 0;
-        width: 18px;
-        height: 18px;
+    .submit-btn:hover {
+        filter: brightness(1.1);
     }
+    
+    /* Priority Shield Alignment: Flexbox implementation for label/checkbox pairing */
+    .checkbox-label-wrapper {
+        display: flex;
+        align-items: center; 
+        gap: 10px;
+        margin: 15px 0;
+        cursor: pointer;
+    }
+
+    .checkbox-label-wrapper input {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    small {
+        display: block;
+        color: #666;
+        margin-top: 0.5rem;
+        font-style: italic;
     }
 </style>
 
 <div class="form-container">
     <h2 style="text-align: center; margin-top: 0;">⚒️ The Quest Forge</h2>
+    
     <form action="/quests/create" method="POST">
+        
         <div class="form-group">
             <label for="title">Quest Title</label>
-            <input type="text" id="title" name="title" placeholder="Enter New Quest Here" required>
+            <input type="text" id="title" name="title" placeholder="Enter task description..." required>
         </div>
 
         <div class="form-group">
@@ -67,20 +93,21 @@
         <div class="form-group">
             <label for="difficulty">Quest Difficulty</label>
             <select id="difficulty" name="difficulty">
-                <option value="" disabled selected>Select the size of this quest...</option>
+                <option value="" disabled selected>Select effort level...</option>
                 <option value="1">🦆 Duck (Quick & Simple - 10 XP)</option>
                 <option value="2">🐑 Sheep (Standard Effort - 25 XP)</option>
                 <option value="3">🐄 Cow (Major Accomplishment - 50 XP)</option>
             </select>
-            <small>The XP reward will be calculated automatically upon completion.</small>
+            <small>Base XP is calculated server-side to ensure economy integrity.</small>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
-            <input type="checkbox" id="is_non_negotiable" name="is_non_negotiable" value="1" style="width: 20px; height: 20px; cursor: pointer;">
-            <label for="is_non_negotiable" style="font-weight: bold; cursor: pointer; color: #004d26; margin-bottom: 0;">
-            Check This Box if Quest is a Non-Negotiable!
+        <div class="checkbox-label-wrapper">
+            <input type="checkbox" id="is_non_negotiable" name="is_non_negotiable" value="1">
+            <label for="is_non_negotiable" style="font-weight: bold; color: var(--milford-green); margin-bottom: 0; cursor: pointer;">
+                Activate Priority Shield (Non-Negotiable)
             </label>
         </div>
+
         <button type="submit" class="submit-btn">Forge Quest</button>
     </form>
 </div>

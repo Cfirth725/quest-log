@@ -6,8 +6,9 @@ import (
 	"fmt"
 )
 
-// GetActiveQuests fetches all pending quests for a user, including shared household quests.
-// It joins the categories table to provide the frontend with the correct category name and color.
+// GetActiveQuests retrieves all pending tasks for a specific user, including
+// shared household entries. It performs a LEFT JOIN with the categories table
+// to ensure the UI has access to thematic metadata (naming and color-hex).
 func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestResponse, error) {
 	query := `
 		SELECT 
@@ -20,7 +21,7 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestRespon
 		ORDER BY q.is_non_negotiable DESC, q.created_at ASC
 	`
 
-	// Pass context to the query to allow for graceful timeouts
+	// Context-aware query execution to handle timeouts or client cancellations
 	rows, err := db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query active quests: %w", err)
@@ -31,7 +32,7 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestRespon
 
 	for rows.Next() {
 		var q QuestResponse
-		// Scan maps the SQL columns directly to the struct fields in the exact order queried
+		// Direct scanning into struct fields; order must precisely match the SELECT clause
 		err := rows.Scan(
 			&q.ID, &q.Title, &q.Difficulty, &q.BaseXP, &q.QuestType, &q.IsNonNegotiable, &q.Status, &q.CreatedAt,
 			&q.CategoryName, &q.CategoryColor,
@@ -42,7 +43,7 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestRespon
 		activeQuests = append(activeQuests, q)
 	}
 
-	// Always check for errors that occurred during iteration
+	// Post-iteration error check to ensure stream was not interrupted
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating quest rows: %w", err)
 	}
@@ -50,18 +51,20 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestRespon
 	return activeQuests, nil
 }
 
-// CompleteQuest handles the transactional logic of marking a task done,
-// calculating XP, updating streaks, and writing to the historical ledger.
+// CompleteQuest executes a high-integrity transaction to finalize a task.
+// It calculates dynamic XP rewards based on user streaks and records the
+// event in an immutable ledger for historical auditing (The Weekly Corral).
 func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserID int) error {
-	// BeginTx starts a transaction. If any step fails, we rollback to prevent partial data writes.
+	// Initialize a transaction to ensure atomic execution.
+	// This prevents partial writes where a quest is marked done but no XP is awarded.
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return fmt.Errorf("repository: transaction initiation failed: %w", err)
 	}
-	// Defer a rollback. If the transaction is successfully committed later, this does nothing.
+	// Defensive defer: Rollback will execute unless the transaction is explicitly committed.
 	defer tx.Rollback()
 
-	// 1. Fetch current quest state to prevent double-dipping and get Base XP
+	// 1. Validation: Verify quest existence and prevent duplicate completion
 	var currentStatus string
 	var baseXP int
 
@@ -70,55 +73,55 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 		FROM quests 
 		WHERE id = ?`, questID).Scan(&currentStatus, &baseXP)
 	if err != nil {
-		return fmt.Errorf("failed to fetch quest details: %w", err)
+		return fmt.Errorf("repository: state verification failed: %w", err)
 	}
 
 	if currentStatus == "Completed" {
-		return fmt.Errorf("quest is already completed")
+		return fmt.Errorf("repository: quest [%d] already finalized")
 	}
 
-	// 2. Fetch user's current dopamine streak for the multiplier
+	// 2. Multiplier Logic: Retrieve current user streak from the persistent store
 	var currentStreak int
 	err = tx.QueryRowContext(ctx, `
 		SELECT dopamine_streak 
 		FROM users 
 		WHERE id = ?`, completingUserID).Scan(&currentStreak)
 	if err != nil {
-		return fmt.Errorf("failed to fetch user streak: %w", err)
+		return fmt.Errorf("repository: user streak retrieval failed: %w", err)
 	}
 
-	// 3. Calculate Final XP
+	// 3. XP Calculation Logic
 	earnedXP := baseXP + currentStreak
 
-	// 4. Update the Quest (Mark complete and log the timestamp)
+	// 4. Update Quest State: Mark as 'Completed' and update the temporal record
 	_, err = tx.ExecContext(ctx, `
 		UPDATE quests 
 		SET status = 'Completed', last_completed_at = CURRENT_TIMESTAMP 
 		WHERE id = ?`, questID)
 	if err != nil {
-		return fmt.Errorf("failed to update quest status: %w", err)
+		return fmt.Errorf("repository: quest status update failed: %w", err)
 	}
 
-	// 5. Write to the Immutable Ledger (For the Weekly Corral UI)
+	// 5. Immutable Ledger Write: Record completion for telemetry and reporting
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO quest_completions (quest_id, completed_by_user_id, xp_awarded) 
 		VALUES (?, ?, ?)`, questID, completingUserID, earnedXP)
 	if err != nil {
-		return fmt.Errorf("failed to log quest completion: %w", err)
+		return fmt.Errorf("repository: ledger entry failed: %w", err)
 	}
 
-	// 6. Reward the User
+	// 6. User Reward Application: Increment streak/XP values
 	_, err = tx.ExecContext(ctx, `
 		UPDATE users 
 		SET dopamine_streak = dopamine_streak + ? 
 		WHERE id = ?`, earnedXP, completingUserID)
 	if err != nil {
-		return fmt.Errorf("failed to update user streak: %w", err)
+		return fmt.Errorf("repository: user reward application failed: %w", err)
 	}
 
-	// Commit permanently saves all the changes made in this transaction
+	// Commit finalized state change to the database
 	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+		return fmt.Errorf("repository: final transaction commit failed: %w", err)
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 {{ define "quest_card" }}
 <style>
-    /* Static CSS: No Go tags here means NO MORE EDITOR ERRORS */
+    /* Quest Card Component Styles
+       Encapsulated styles for the individual quest entry. */
     .quest-card {
         background: white;
         border: 1px solid var(--border-color);
@@ -12,14 +13,17 @@
         align-items: center;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
+
+    /* Visual Indicator: Dynamic accent bar 
+       Utilizes the --dynamic-cat-color variable injected via the Go template. */
     .quest-accent-bar {
         width: 6px;
         height: 40px;
         border-radius: 3px;
         margin-right: 1rem;
-        /* This uses the variable we set in the HTML below */
         background-color: var(--dynamic-cat-color);
     }
+
     .quest-title { margin: 0; font-size: 1.1rem; color: #111; }
     .quest-meta { font-size: 0.85rem; color: #666; margin-top: 4px; }
     .xp-text { color: #ca8a04; font-weight: bold; }
@@ -32,10 +36,13 @@
         border-radius: 8px;
         cursor: pointer;
         font-weight: bold;
-        transition: opacity 0.2s;
+        transition: transform 0.1s, opacity 0.2s;
     }
-    .complete-btn:hover { opacity: 0.9; }
 
+    .complete-btn:hover { opacity: 0.9; transform: scale(1.02); }
+    .complete-btn:active { transform: scale(0.98); }
+
+    /* Priority Shield Badge: Highlight for non-negotiable tasks */
     .badge-must {
         background: #fee2e2;
         color: #991b1b;
@@ -57,7 +64,7 @@
             <div style="display: flex; align-items: center;">
                 <h3 class="quest-title">{{ .Title }}</h3>
                 {{ if .IsNonNegotiable }}
-                    <span class="badge-must">Must Do</span>
+                    <span class="badge-must" title="Priority Shield Active">Must Do</span>
                 {{ end }}
             </div>
             

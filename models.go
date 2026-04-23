@@ -4,7 +4,9 @@ import (
 	"time"
 )
 
-// QuestResponse represents the data sent to the UI, combining Quest and Category data.
+// QuestResponse represents a flattened data structure for the UI.
+// It joins Quest and Category data into a single object to simplify
+// template rendering and JSON API delivery.
 type QuestResponse struct {
 	ID              int       `json:"id"`
 	Title           string    `json:"title"`
@@ -18,10 +20,11 @@ type QuestResponse struct {
 	CreatedAt       time.Time `json:"created_at"`
 }
 
-// ----- Defines a Category -----
+// Category defines the thematic grouping for quests.
+// It includes metadata for UI rendering (ColorHex) and visibility state (IsArchived).
 type Category struct {
 	ID         int    `json:"id"`
-	OwnerID    int    `json:"owner_id"`
+	OwnerID    int    `json:"owner_id"` // 0 indicates a system-wide or shared category
 	Name       string `json:"name"`
 	ColorHex   string `json:"color_hex"`
 	IsArchived bool   `json:"is_archived"`

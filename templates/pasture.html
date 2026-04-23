@@ -1,11 +1,18 @@
 {{ define "content" }}
 <style>
+    /* Pasture Dashboard Header: 
+       Utilizes space-between to separate primary status from 
+       Momentum Mode controls. */
     .pasture-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
         margin-bottom: 2rem;
     }
+
+    /* Momentum Mode Control: 
+       High-visibility alert styling to trigger backend filtration 
+       for non-negotiable tasks. */
     .bad-brain-btn {
         background: #fef2f2;
         color: #dc2626;
@@ -15,9 +22,14 @@
         cursor: pointer;
         font-weight: 600;
         text-decoration: none;
+        transition: background 0.2s;
     }
+
     .bad-brain-btn:hover { background: #fee2e2; }
     
+    /* Empty State: 
+       Displayed when the active quest payload is empty to provide 
+       visual confirmation of task completion. */
     .empty-state {
         text-align: center;
         padding: 3rem;
@@ -31,10 +43,13 @@
     <div>
         <h2 style="margin: 0; font-size: 1.5rem;">Today's Flock</h2>
         <p style="color: #666; font-size: 0.9rem; margin-top: 4px;">
-            Complete quests to herd sheep into your weekly corral.
+            Manage active quests and track progress toward the Weekly Corral.
         </p>
     </div>
-    <button class="bad-brain-btn">🚨 Bad Brain Day</button>
+
+    <button class="bad-brain-btn" title="Enable Momentum Mode (Priority Shield Only)">
+        🚨 Bad Brain Day
+    </button>
 </div>
 
 <div class="quest-list">
@@ -42,9 +57,11 @@
         {{ template "quest_card" . }}
     {{ else }}
         <div class="empty-state">
-            <span style="font-size: 3rem;">🌤️</span>
-            <h3 style="margin: 1rem 0 0.5rem 0;">The pasture is clear!</h3>
-            <p style="color: #666; margin: 0;">You've herded all the sheep. Enjoy the rest of your day.</p>
+            <span style="font-size: 3rem;" role="img" aria-label="Clear sky">🌤️</span>
+            <h3 style="margin: 1rem 0 0.5rem 0;">The Pasture is Clear</h3>
+            <p style="color: #666; margin: 0;">
+                All sheep have been herded. Enjoy your day!
+            </p>
         </div>
     {{ end }}
 </div>

@@ -6,46 +6,49 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var DB *sql.DB // Global pointer to the database connection
+// DB acts as the global connection pool for the application lifecycle.
+var DB *sql.DB
 
-// Connect opens a connection to the SQLite database, configures it for production use,
-// and ensures all required tables exist.
+// Connect initializes the SQLite driver, configures performance pragmas,
+// and executes the schema migration suite.
 func Connect() (*sql.DB, error) {
-	// 1. Open the connection to the file (creates quests.db if it doesn't exist)
+	// Initialize connection to the local SQLite file.
+	// SQLite will automatically create the file if it does not exist.
 	db, err := sql.Open("sqlite3", "./quests.db")
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		return nil, fmt.Errorf("database: failed to open connection: %w", err)
 	}
 
-	// 2. Ping the database to ensure the connection is actually valid
+	// Verify connectivity to the database file.
 	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+		return nil, fmt.Errorf("database: connectivity check failed: %w", err)
 	}
 
-	// 3. Configure SQLite for performance and data integrity
-	// WAL (Write-Ahead Logging) greatly improves concurrent read/write speeds.
-	// Foreign Keys must be explicitly turned on in SQLite to enforce our schema rules.
+	// Configure SQLite for high-concurrency and data safety.
+	// WAL (Write-Ahead Logging) allows simultaneous reads and writes.
+	// Foreign Key enforcement is explicitly enabled to maintain relational integrity.
 	pragmas := `
 		PRAGMA journal_mode = WAL;
 		PRAGMA synchronous = NORMAL;
 		PRAGMA foreign_keys = ON;
 	`
 	if _, err := db.Exec(pragmas); err != nil {
-		return nil, fmt.Errorf("failed to set database pragmas: %w", err)
+		return nil, fmt.Errorf("database: failed to apply performance pragmas: %w", err)
 	}
 
-	// 4. Run auto-migrations (create tables if they don't exist)
+	// Execute idempotent schema migrations.
 	if err := createTables(db); err != nil {
-		return nil, fmt.Errorf("failed to create tables: %w", err)
+		return nil, fmt.Errorf("database: schema migration failed: %w", err)
 	}
 
 	return db, nil
 }
 
+// GetCategories retrieves active quest categories for the 'Quest Forge' interface.
 func GetCategories(db *sql.DB) ([]Category, error) {
 	rows, err := db.Query("SELECT id, name FROM categories WHERE is_archived = 0 ORDER BY name ASC")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database: category retrieval failed: %w", err)
 	}
 	defer rows.Close()
 
@@ -53,9 +56,13 @@ func GetCategories(db *sql.DB) ([]Category, error) {
 	for rows.Next() {
 		var c Category
 		if err := rows.Scan(&c.ID, &c.Name); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("database: category scan failed: %w", err)
 		}
 		categories = append(categories, c)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("database: error during category iteration: %w", err)
 	}
 	return categories, nil
 }
@@ -113,6 +120,8 @@ func createTables(db *sql.DB) error {
 	);
 	`
 
-	_, err := db.Exec(schema)
-	return err
+	if _, err := db.Exec(schema); err != nil {
+		return fmt.Errorf("database: schema execution failed: %w", err)
+	}
+	return nil
 }
