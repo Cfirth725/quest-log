@@ -67,6 +67,27 @@ func GetCategories(db *sql.DB) ([]Category, error) {
 	return categories, nil
 }
 
+// GetUsers retrieves all active users for quest assignment.
+func GetUsers(db *sql.DB) ([]User, error) {
+	query := "SELECT id, name, dopamine_streak FROM users ORDER BY name ASC"
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("database: user retrieval failed: %w", err)
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.ID, &u.Name, &u.DopamineStreak); err != nil {
+			return nil, fmt.Errorf("database: user scan failed: %w", err)
+		}
+		users = append(users, u)
+	}
+
+	return users, nil
+}
+
 // createTables executes the schema creation. Using "IF NOT EXISTS" ensures this
 // only runs the first time the app boots, or if a table was accidentally deleted.
 func createTables(db *sql.DB) error {

@@ -29,3 +29,16 @@ type Category struct {
 	ColorHex   string `json:"color_hex"`
 	IsArchived bool   `json:"is_archived"`
 }
+
+// ForgeData holds all the reference data needed to populate the Quest Forge forms.
+type ForgeData struct {
+	Categories []Category
+	Users      []User
+}
+
+// User represents a person in the household.
+type User struct {
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	DopamineStreak int    `json:"dopamine_streak"`
+}

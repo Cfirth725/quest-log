@@ -81,14 +81,20 @@
             <input type="text" id="title" name="title" placeholder="Enter task description..." required>
         </div>
 
-        <div class="form-group">
-            <label for="category">Category</label>
-            <select id="category" name="category_id">
-                {{ range . }}
-                    <option value="{{ .ID }}">{{ .Name }}</option>
-                {{ end }}
-            </select>
-        </div>
+        <label for="category_id">Category</label>
+        <select id="category_id" name="category_id">
+            {{ range .Categories }}
+                <option value="{{ .ID }}">{{ .Name }}</option>
+            {{ end }}
+        </select>
+
+        <label for="owner_id">Assign To</label>
+        <select id="owner_id" name="owner_id">
+                <option value="0">🏠 Household (Shared)</option>
+            {{ range .Users }}
+                <option value="{{ .ID }}">{{ .Name }}</option>
+            {{ end }}
+        </select>
 
         <div class="form-group">
             <label for="difficulty">Quest Difficulty</label>

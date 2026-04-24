@@ -32,7 +32,18 @@ func main() {
 		if err != nil {
 			log.Printf("Internal Error: Failed to fetch categories for The Forge: %v", err)
 		}
-		RenderTemplate(w, "new_quest", categories)
+
+		users, err := GetUsers(DB)
+		if err != nil {
+			log.Printf("Internal Error: Failed to fetch users: %v", err)
+		}
+
+		data := ForgeData{
+			Categories: categories,
+			Users:      users,
+		}
+
+		RenderTemplate(w, "new_quest", data)
 	})
 
 	// Route: POST /quests/create

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -78,6 +79,24 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	categoryID := r.FormValue("category_id")
 	difficulty := r.FormValue("difficulty")
+	ownerIDStr := r.FormValue("owner_id")
+
+	// Convert and Validate owner_id
+	ownerID, err := strconv.Atoi(ownerIDStr)
+	if err != nil {
+		log.Printf("Security Alert: Non-integer owner_id received: %s", ownerIDStr)
+		http.Error(w, "Invalid user assignment format.", http.StatusBadRequest)
+		return
+	}
+
+	// --- OWNER SANITY CHECK ---
+	// Rule: ID must be 0 (Household) or a positive integer existing in our system.
+	// !! For now, since we only have IDs 1 and 2, we check if it's within a valid range.
+	if ownerID < 0 || ownerID > 2 {
+		log.Printf("Security Alert: Unauthorized owner_id attempt: %d", ownerID)
+		http.Error(w, "Unauthorized User Assignment.", http.StatusForbidden)
+		return
+	}
 
 	// --- GHOST GUARD: Input Sanitization ---
 	cleanTitle := strings.TrimSpace(title)
@@ -109,13 +128,11 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 		isNonNegotiable = 1
 	}
 
-	// !TEMPORARY! Hard-coded ownership
-	const CurrentUserID = 1
-
+	// Database Injection
 	query := `INSERT INTO quests (title, category_id, difficulty, base_xp, is_non_negotiable, status, owner_id, quest_type)
         VALUES (?, ?, ?, ?, ?, 'active', ?, 'One-Time')`
 
-	_, err = DB.Exec(query, cleanTitle, categoryID, difficulty, calculatedXP, isNonNegotiable, CurrentUserID)
+	_, err = DB.Exec(query, cleanTitle, categoryID, difficulty, calculatedXP, isNonNegotiable, ownerID)
 	if err != nil {
 		log.Printf("Database Error: Failed to insert new quest: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
