@@ -1,0 +1,232 @@
+/* ================================================================
+   THE QUEST LOG DESIGN SYSTEM
+   Theme: High-Contrast "Pasture" Green
+   Updated: April 2026
+================================================================ 
+*/
+
+:root {
+/* Color Palette */
+    --bg-color: #f0fdf4;        /* Soft green wash */
+    --primary-green: #166534;   /* Deep forest for text/accents */
+    --border-color: #dcfce7;    /* Light mint for dividers */
+    --card-bg: #ffffff;
+    --text-secondary: #666666;
+    --danger-red: #dc2626;      /* Bad Brain / Delete actions */
+    --xp-gold: #ca8a04;         /* Reward highlights */
+}
+
+/* --- 1. Base Layout Architecture --- */
+body { 
+    font-family: system-ui, -apple-system, sans-serif; 
+    background-color: var(--bg-color); 
+    margin: 0; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 100vh; /* Keeps footer at bottom */
+}
+
+/* Global width constraint for scannability */
+.container { 
+    max-width: 800px; 
+    margin: 0 auto; 
+    width: 100%; 
+}
+
+main { 
+    flex-grow: 1; 
+    padding: 2rem 1rem; 
+}
+
+/* --- 2. Navigation System --- */
+nav { 
+    background: white; 
+    border-bottom: 2px solid var(--border-color); 
+    padding: 1rem; 
+}
+
+.nav-flex { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
+
+.nav-links a { 
+    margin-left: 1rem; 
+    text-decoration: none; 
+    color: var(--primary-green); 
+    font-weight: bold;
+}
+
+/* --- 3. Component Library --- */
+
+/* --- Pasture Styles --- */
+.pasture-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+}
+
+/* Displayed when all tasks are done (Zero-Inbox state) */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border: 2px dashed #bbf7d0;
+    border-radius: 12px;
+}
+
+/* --- Quest Card Styles --- */
+.quest-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.quest-accent-bar {
+    width: 6px;
+    height: 40px;
+    border-radius: 3px;
+    margin-right: 1rem;
+    /* Color injected via Go Template variable --dynamic-cat-color */
+    background-color: var(--dynamic-cat-color); 
+}
+
+.quest-title { margin: 0; font-size: 1.1rem; color: #111; }
+.quest-meta { font-size: 0.85rem; color: #666; margin-top: 4px; }
+.xp-text { color: var(--xp-gold); font-weight: bold; }
+
+/* Badge for "Non-Negotiable" status */
+.badge-must {
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-left: 8px;
+}
+
+/* --- 4. Forms & Data Entry --- */
+.form-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    max-width: 500px;
+    margin: 0 auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Vertical spacing for form rows */
+.form-group { margin-bottom: 1.5rem; }
+
+label { 
+    display: block; 
+    font-weight: bold; 
+    margin-bottom: 0.5rem; 
+    color: var(--primary-green); 
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem; 
+    box-sizing: border-box; /* Prevents padding from expanding width */
+}
+
+/* Specialized wrapper for Checkbox/Label pairs */
+.checkbox-label-wrapper {
+    display: flex;
+    align-items: center; 
+    gap: 10px;
+    margin: 15px 0;
+    cursor: pointer;
+}
+
+.checkbox-label-wrapper input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin: 0;
+}
+
+small {
+    display: block;
+    color: #666;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* --- 5. Interactive Elements (Buttons) --- */
+.submit-btn, .complete-btn {
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.submit-btn { width: 100%; padding: 1rem; font-size: 1.1rem; }
+.submit-btn:hover, .complete-btn:hover { opacity: 0.9; transform: scale(1.02); }
+.submit-btn:active { transform: scale(0.98); }
+
+.bad-brain-btn {
+    background: #fef2f2;
+    color: var(--danger-red);
+    border: 1px solid #fecaca;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+}
+.bad-brain-btn:hover { background: #fee2e2; }
+
+
+/* --- 6. Specialized UI (Settings & Tables) --- */
+.settings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.settings-table th, .settings-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Circle preview for category colors */
+.category-preview-dot {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    vertical-align: middle;
+    border: 1px solid rgba(0,0,0,0.1); 
+    /* color-hex is injected via style="--dot-color: {{ .ColorHex }}" */
+    background-color: var(--dot-color, #ccc); 
+}
+
+/* --- 7. Utility & Misc --- */
+footer { 
+    text-align: center; 
+    padding: 1rem; 
+    font-size: 0.8rem; 
+    color: var(--text-secondary); 
+    background: white; 
+}

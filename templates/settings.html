@@ -1,0 +1,44 @@
+{{ define "content" }}
+<div class="container">
+    <section class="form-container">
+        <h2 style="text-align: center; margin-top: 0;">⚙️ Node Settings</h2>
+        
+        <h3>Forge New Category</h3>
+        <form action="/categories/create" method="POST" style="display: flex; gap: 10px; align-items: center;">
+    <input type="text" name="name" placeholder="Category Name..." required style="flex-grow: 1; width: auto;">
+    <input type="color" name="color" value="#4f46e5" style="width: 50px; padding: 2px; height: 38px;">
+    <button type="submit" class="submit-btn" style="width: auto; padding: 0.5rem 1rem;">Add</button>
+</form>
+    </section>
+
+    <section class="form-container" style="margin-top: 2rem; max-width: 800px;">
+        <h3>📋 Existing Categories</h3>
+        <table class="settings-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Color Preview</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Categories }}
+                <tr>
+                    <td><strong>{{ .Name }}</strong></td>
+                    <td>
+                        <span class="category-preview-dot" style="--dot-color: {{ .ColorHex }};"></span>
+                        <code>{{ .ColorHex }}</code>
+                    </td>
+                    <td>
+                        <form action="/categories/delete" method="POST" onsubmit="return confirm('Really delete {{ .Name }}?')">
+                            <input type="hidden" name="category_id" value="{{ .ID }}">
+                            <button type="submit" class="delete-btn-text">🗑️ Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </section>
+</div>
+{{ end }}

@@ -7,6 +7,7 @@ quest-log
 *.db-wal
 *.csv
 *.env
+*.txt
 
 # OS metadata
 .DS_Store

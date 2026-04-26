@@ -1,44 +1,4 @@
 {{ define "content" }}
-<style>
-    /* Pasture Dashboard Header: 
-       Utilizes space-between to separate primary status from 
-       Momentum Mode controls. */
-    .pasture-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        margin-bottom: 2rem;
-    }
-
-    /* Momentum Mode Control: 
-       High-visibility alert styling to trigger backend filtration 
-       for non-negotiable tasks. */
-    .bad-brain-btn {
-        background: #fef2f2;
-        color: #dc2626;
-        border: 1px solid #fecaca;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 600;
-        text-decoration: none;
-        transition: background 0.2s;
-    }
-
-    .bad-brain-btn:hover { background: #fee2e2; }
-    
-    /* Empty State: 
-       Displayed when the active quest payload is empty to provide 
-       visual confirmation of task completion. */
-    .empty-state {
-        text-align: center;
-        padding: 3rem;
-        background: white;
-        border: 2px dashed #bbf7d0;
-        border-radius: 12px;
-    }
-</style>
-
 <div class="pasture-header">
     <div>
         <h2 style="margin: 0; font-size: 1.5rem;">Today's Flock</h2>

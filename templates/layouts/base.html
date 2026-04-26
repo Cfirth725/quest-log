@@ -5,64 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quest Log: {{ block "title" . }}System{{ end }}</title>
-    <style>
-        /* Global CSS Variables: Consistent theme management for 
-           high-contrast/dark-mode accessibility. */
-        :root {
-            --bg-color: #f0fdf4;
-            --primary-green: #166534;
-            --border-color: #dcfce7;
-            --card-bg: #ffffff;
-            --text-secondary: #888;
-        }
-
-        /* Base Layout Engine */
-        body { 
-            font-family: system-ui, -apple-system, sans-serif; 
-            background-color: var(--bg-color); 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh;
-        }
-
-        /* Navigation Architecture */
-        nav { 
-            background: white; 
-            border-bottom: 2px solid var(--border-color); 
-            padding: 1rem; 
-        }
-        .container { 
-            max-width: 800px; 
-            margin: 0 auto; 
-            width: 100%; 
-        }
-        .nav-flex { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        .nav-links a { 
-            margin-left: 1rem; 
-            text-decoration: none; 
-            color: var(--primary-green); 
-            font-weight: bold;
-        }
-
-        /* Content Area: Flex-grow ensures footer stays at the bottom */
-        main { flex-grow: 1; 
-            padding: 2rem 1rem; 
-        }
-
-        /* System Footer */
-        footer { 
-            text-align: center; 
-            padding: 1rem; 
-            font-size: 0.8rem; 
-            color: var(--text-secondary); 
-            background: white; 
-        }
-    </style>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <nav>
@@ -72,6 +15,7 @@
                 <a href="/">The Pasture</a>
                 <a href="/newquest">The Forge</a>
                 <a href="/corral">The Corral</a>
+                <a href="/settings">Settings</a>
             </div>
         </div>
     </nav>

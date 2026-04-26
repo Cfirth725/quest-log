@@ -1,76 +1,4 @@
 {{ define "content" }}
-<style>
-    /* Quest Forge Layout
-       Centrally aligned container for structured data entry. */
-    .form-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        max-width: 500px;
-        margin: 0 auto;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05)
-    }
-
-    .form-group { margin-bottom: 1.5rem; }
-
-    label { 
-        display: block; 
-        font-weight: bold; 
-        margin-bottom: 0.5rem; 
-        color: var(--primary-green); 
-    }
-
-    input, select, textarea {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 1rem; 
-        box-sizing: border-box; /* Ensures padding doesn't break layout */
-    }
-
-    .submit-btn {
-        background: var(--primary-green);
-        color: white;
-        border: none;
-        padding: 1rem;
-        width: 100%;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-        font-size: 1.1rem;
-        transition: background 0.2s;
-    }
-
-    .submit-btn:hover {
-        filter: brightness(1.1);
-    }
-    
-    /* Priority Shield Alignment: Flexbox implementation for label/checkbox pairing */
-    .checkbox-label-wrapper {
-        display: flex;
-        align-items: center; 
-        gap: 10px;
-        margin: 15px 0;
-        cursor: pointer;
-    }
-
-    .checkbox-label-wrapper input {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-        margin: 0;
-    }
-
-    small {
-        display: block;
-        color: #666;
-        margin-top: 0.5rem;
-        font-style: italic;
-    }
-</style>
-
 <div class="form-container">
     <h2 style="text-align: center; margin-top: 0;">⚒️ The Quest Forge</h2>
     
@@ -81,20 +9,24 @@
             <input type="text" id="title" name="title" placeholder="Enter task description..." required>
         </div>
 
-        <label for="category_id">Category</label>
-        <select id="category_id" name="category_id">
-            {{ range .Categories }}
-                <option value="{{ .ID }}">{{ .Name }}</option>
-            {{ end }}
-        </select>
+        <div class="form-group">
+            <label for="category_id">Category</label>
+            <select id="category_id" name="category_id">
+                {{ range .Categories }}
+                    <option value="{{ .ID }}">{{ .Name }}</option>
+                {{ end }}
+            </select>
+        </div>
 
-        <label for="owner_id">Assign To</label>
-        <select id="owner_id" name="owner_id">
-                <option value="0">🏠 Household (Shared)</option>
-            {{ range .Users }}
-                <option value="{{ .ID }}">{{ .Name }}</option>
-            {{ end }}
-        </select>
+        <div class="form-group">
+            <label for="owner_id">Assign To</label>
+            <select id="owner_id" name="owner_id">
+                    <option value="0">🏠 Household (Shared)</option>
+                {{ range .Users }}
+                    <option value="{{ .ID }}">{{ .Name }}</option>
+                {{ end }}
+            </select>
+        </div>
 
         <div class="form-group">
             <label for="difficulty">Quest Difficulty</label>

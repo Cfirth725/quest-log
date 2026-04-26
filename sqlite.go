@@ -46,7 +46,7 @@ func Connect() (*sql.DB, error) {
 
 // GetCategories retrieves active quest categories for the 'Quest Forge' interface.
 func GetCategories(db *sql.DB) ([]Category, error) {
-	rows, err := db.Query("SELECT id, name FROM categories WHERE is_archived = 0 ORDER BY name ASC")
+	rows, err := db.Query("SELECT id, name, color_hex FROM categories WHERE is_archived = 0 ORDER BY name ASC")
 	if err != nil {
 		return nil, fmt.Errorf("database: category retrieval failed: %w", err)
 	}
@@ -55,7 +55,7 @@ func GetCategories(db *sql.DB) ([]Category, error) {
 	var categories []Category
 	for rows.Next() {
 		var c Category
-		if err := rows.Scan(&c.ID, &c.Name); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.ColorHex); err != nil {
 			return nil, fmt.Errorf("database: category scan failed: %w", err)
 		}
 		categories = append(categories, c)

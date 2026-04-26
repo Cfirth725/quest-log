@@ -10,7 +10,7 @@ func main() {
 	log.Println("Initializing system: Connecting to SQLite database...")
 	db, err := Connect()
 	if err != nil {
-		log.Fatal("Critical Failure: Could not establish database connection: %v", err)
+		log.Fatalf("Critical Failure: Could not establish database connection: %v", err)
 	}
 
 	// Assign to global package-level variable for cross-handler access
@@ -21,39 +21,23 @@ func main() {
 	log.Println("Initialization: Configuring HTTP router and routes...")
 	mux := http.NewServeMux()
 
+	// Serve static files (CSS, Images)
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
 	// --- Dashboard Routes (The Pasture) ---
 	mux.HandleFunc("GET /", ViewPastureHandler(db))
 
 	// --- Quest Management Routes (The Forge) ---
-	// Route: GET /newquest
-	// Renders the quest creation interface with dynamic category data
-	mux.HandleFunc("GET /newquest", func(w http.ResponseWriter, r *http.Request) {
-		categories, err := GetCategories(DB)
-		if err != nil {
-			log.Printf("Internal Error: Failed to fetch categories for The Forge: %v", err)
-		}
-
-		users, err := GetUsers(DB)
-		if err != nil {
-			log.Printf("Internal Error: Failed to fetch users: %v", err)
-		}
-
-		data := ForgeData{
-			Categories: categories,
-			Users:      users,
-		}
-
-		RenderTemplate(w, "new_quest", data)
-	})
-
-	// Route: POST /quests/create
-	// Processes incoming quest form data and persists to the database
+	mux.HandleFunc("GET /newquest", handleNewQuest)
 	mux.HandleFunc("POST /quests/create", handleCreateQuest)
-
-	// Route: POST /quests/complete
-	// Handles quest status transitions and completion logic
 	mux.HandleFunc("POST /quests/complete", handleCompleteQuest)
 	log.Println("Initialization: Router configured successfully.")
+
+	// --- Settings & Category Management ---
+	mux.HandleFunc("GET /settings", handleSettings)
+	mux.HandleFunc("POST /categories/create", handleCreateCategory)
+	mux.HandleFunc("POST /categories/delete", handleDeleteCategory)
+	log.Println("Initialization: Settings configured successfully.")
 
 	// Launch server
 	// Port 8081 is the designated entry point for the Milford Node Quest Log service
