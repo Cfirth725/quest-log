@@ -42,3 +42,18 @@ type User struct {
 	Name           string `json:"name"`
 	DopamineStreak int    `json:"dopamine_streak"`
 }
+
+// Corral Related structs
+type CorralSummary struct {
+	TotalXP    int
+	QuestCount int
+	RecentWins []QuestCompletionRow
+}
+
+type QuestCompletionRow struct {
+	Title        string
+	CategoryName string
+	ColorHex     string
+	XPAwarded    int
+	CompletedAt  string
+}

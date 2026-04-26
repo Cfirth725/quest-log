@@ -1,5 +1,5 @@
 {{ define "quest_card" }}
-<div class="quest-card" style="--dynamic-cat-color: {{ .CategoryColor }};">
+<div class="quest-card {{ if eq .Status "Completed" }}quest-done{{ end }}" style="--dynamic-cat-color: {{ .CategoryColor }};">
     <div style="display: flex; align-items: center;">
         
         <div class="quest-accent-bar"></div>
@@ -9,6 +9,9 @@
                 <h3 class="quest-title">{{ .Title }}</h3>
                 {{ if .IsNonNegotiable }}
                     <span class="badge-must" title="Priority Shield Active">Must Do</span>
+                {{ end }}
+                {{ if eq .Status "Completed" }}
+                    <span class="badge-done">✅ Handled</span>
                 {{ end }}
             </div>
             
@@ -27,9 +30,11 @@
         </div>
     </div>
 
+    {{ if ne .Status "Completed" }}
     <form action="/quests/complete" method="POST">
         <input type="hidden" name="quest_id" value="{{ .ID }}">
         <button type="submit" class="complete-btn">Complete</button>
     </form>
+    {{ end }}
 </div>
 {{ end }}

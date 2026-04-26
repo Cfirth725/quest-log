@@ -68,6 +68,26 @@ nav {
     margin-bottom: 2rem;
 }
 
+/* Styling for herded sheep (Completed quests) */
+.quest-done {
+    opacity: 0.6;
+    background-color: #f9fafb; /* Light gray background */
+    border-style: dashed;      /* Dashed border implies "finished" */
+    filter: grayscale(0.4);    /* Tone down the colors */
+    pointer-events: none;      /* Prevents clicking anything inside while completed */
+}
+
+.badge-done {
+    background: #dcfce7;       /* Very light green */
+    color: var(--primary-green);
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 10px;
+    text-transform: uppercase;
+}
+
 /* Displayed when all tasks are done (Zero-Inbox state) */
 .empty-state {
     text-align: center;

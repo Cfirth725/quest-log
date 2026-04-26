@@ -17,8 +17,11 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestRespon
 		FROM quests q
 		LEFT JOIN categories c ON q.category_id = c.id
 		WHERE (q.owner_id = ? OR q.owner_id = 0)
-		AND q.status != 'Completed'
-		ORDER BY q.is_non_negotiable DESC, q.created_at ASC
+		AND q.status IN ('active', 'Completed')
+		ORDER BY 
+        CASE WHEN q.status = 'active' THEN 0 ELSE 1 END ASC,
+        q.is_non_negotiable DESC, 
+        q.created_at ASC
 	`
 
 	// Context-aware query execution to handle timeouts or client cancellations
@@ -125,4 +128,64 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 	}
 
 	return nil
+}
+
+// ArchiveCompletedQuests flips the status of finished tasks to 'Archived'.
+// This is the "Weekly Reset" button that clears the visual Pasture.
+func ArchiveCompletedQuests(ctx context.Context, db *sql.DB, userID int) (int64, error) {
+	query := `
+		UPDATE quests 
+		SET status = 'Archived' 
+		WHERE status = 'Completed' 
+		AND (owner_id = ? OR owner_id = 0)
+	`
+	result, err := db.ExecContext(ctx, query, userID)
+	if err != nil {
+		return 0, fmt.Errorf("repository: failed to archive completed quests: %w", err)
+	}
+
+	return result.RowsAffected()
+}
+
+func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (CorralSummary, error) {
+	var summary CorralSummary
+
+	// 1. Get the Totals
+	err := db.QueryRowContext(ctx, `
+    SELECT 
+        COUNT(id), 
+        COALESCE(SUM(xp_awarded), 0) -- If it's NULL, make it 0
+    FROM quest_completions 
+    WHERE completed_by_user_id = ? 
+    AND completed_at >= date('now', '-7 days')`, userID).Scan(&summary.QuestCount, &summary.TotalXP)
+
+	if err != nil {
+		return summary, err
+	}
+
+	// 2. Get the individual list of wins
+	rows, err := db.QueryContext(ctx, `
+		SELECT q.title, c.name, c.color_hex, qc.xp_awarded, qc.completed_at
+		FROM quest_completions qc
+		JOIN quests q ON qc.quest_id = q.id
+		JOIN categories c ON q.category_id = c.id
+		WHERE qc.completed_by_user_id = ?
+		ORDER BY qc.completed_at DESC`, userID)
+
+	if err != nil {
+		return summary, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var r QuestCompletionRow
+		// ORDER: Title, CategoryName, ColorHex, XPAwarded, CompletedAt
+		err := rows.Scan(&r.Title, &r.CategoryName, &r.ColorHex, &r.XPAwarded, &r.CompletedAt)
+		if err != nil {
+			return summary, fmt.Errorf("scan failed: %w", err)
+		}
+		summary.RecentWins = append(summary.RecentWins, r)
+	}
+
+	return summary, nil
 }

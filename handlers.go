@@ -83,3 +83,37 @@ func handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, "/settings", http.StatusSeeOther)
 }
+
+// ----- Corral Logic -----
+// POST /corral/archive
+func handleCorralQuests(w http.ResponseWriter, r *http.Request) {
+	// Only allow POST for actions that change data
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	count, err := CorralCompletedQuests(DB)
+	if err != nil {
+		log.Printf("Corral Error: %v", err)
+		http.Error(w, "Failed to corral quests", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Success: %d quests moved to The Corral.", count)
+
+	// Redirect back to the pasture (or a new Corral summary page)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func handleViewCorral(w http.ResponseWriter, r *http.Request) {
+	// For now, using User ID 1
+	summary, err := GetWeeklySummary(r.Context(), DB, 1)
+	if err != nil {
+		log.Printf("Corral View Error: %v", err)
+		http.Error(w, "Failed to load the Corral", http.StatusInternalServerError)
+		return
+	}
+
+	RenderTemplate(w, "corral", summary)
+}

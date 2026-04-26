@@ -88,6 +88,33 @@ func GetUsers(db *sql.DB) ([]User, error) {
 	return users, nil
 }
 
+// ----- Completed Quests -----
+// CorralCompletedQuests shifts finished 'One-Time' tasks into 'Archived' status.
+func CorralCompletedQuests(db *sql.DB) (int64, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	// One time quests
+	query := `
+		UPDATE quests 
+		SET status = 'Archived' 
+		WHERE quest_type = 'One-Time' 
+		AND status = 'Pending'
+		AND id IN (SELECT quest_id FROM quest_completions);`
+
+	result, err := tx.Exec(query)
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	rows, _ := result.RowsAffected()
+	err = tx.Commit()
+	return rows, err
+}
+
 // createTables executes the schema creation. Using "IF NOT EXISTS" ensures this
 // only runs the first time the app boots, or if a table was accidentally deleted.
 func createTables(db *sql.DB) error {

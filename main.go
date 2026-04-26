@@ -24,8 +24,9 @@ func main() {
 	// Serve static files (CSS, Images)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	// --- Dashboard Routes (The Pasture) ---
+	// --- Dashboard Routes (The Pasture & Corral) ---
 	mux.HandleFunc("GET /", ViewPastureHandler(db))
+	mux.HandleFunc("GET /corral", handleViewCorral)
 
 	// --- Quest Management Routes (The Forge) ---
 	mux.HandleFunc("GET /newquest", handleNewQuest)
