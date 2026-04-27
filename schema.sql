@@ -1,10 +1,10 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     dopamine_streak INTEGER DEFAULT 0
 );
 
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     owner_id INTEGER DEFAULT 0, 
     name TEXT NOT NULL,
@@ -13,15 +13,15 @@ CREATE TABLE categories (
     UNIQUE(owner_id, name)
 );
 
-CREATE TABLE quests (
+CREATE TABLE IF NOT EXISTS quests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     owner_id INTEGER DEFAULT 0,
     category_id INTEGER,
     title TEXT NOT NULL,
     difficulty INTEGER CHECK( difficulty IN (1, 2, 3) ),
-    base_xp INTEGER CHECK( base_xp IN (10, 25, 50) ),
+    base_xp INTEGER CHECK( base_xp IN (1, 5, 10) ),
     is_non_negotiable BOOLEAN DEFAULT 0,
-    status TEXT DEFAULT 'Pending',
+    status TEXT DEFAULT 'active',
     quest_type TEXT CHECK( quest_type IN ('One-Time', 'Daily', 'Repeating') ), 
     repeat_interval_days INTEGER DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -29,7 +29,7 @@ CREATE TABLE quests (
     FOREIGN KEY(category_id) REFERENCES categories(id)
 );
 
-CREATE TABLE quest_completions (
+CREATE TABLE IF NOT EXISTS quest_completions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     quest_id INTEGER,
     completed_by_user_id INTEGER,
@@ -38,7 +38,7 @@ CREATE TABLE quest_completions (
     FOREIGN KEY(quest_id) REFERENCES quests(id)
 );
 
-CREATE TABLE gear_checks (
+CREATE TABLE IF NOT EXISTS gear_checks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     quest_id INTEGER,
     item_name TEXT NOT NULL,

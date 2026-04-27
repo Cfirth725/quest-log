@@ -12,9 +12,9 @@ import (
 
 // Experience constants defining the reward economy for quest tiers.
 const (
-	XP_DUCK  = 10
-	XP_SHEEP = 25
-	XP_COW   = 50
+	XP_DUCK  = 1
+	XP_SHEEP = 5
+	XP_COW   = 10
 )
 
 // RenderTemplate handles the assembly and execution of HTML templates,
@@ -151,18 +151,30 @@ func handleCompleteQuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	questID := r.FormValue("quest_id")
-	if questID == "" {
+	// 1. Get the Quest ID from the form
+	questIDStr := r.FormValue("quest_id")
+	if questIDStr == "" {
 		log.Println("Validation Error: Complete request received without Quest ID.")
 		http.Error(w, "Missing Quest ID", http.StatusBadRequest)
 		return
 	}
 
-	query := `UPDATE quests SET status = 'Completed' WHERE id = ?`
-	_, err := DB.Exec(query, questID)
+	questID, err := strconv.Atoi(questIDStr)
 	if err != nil {
-		log.Printf("❌ Database Error: %v", err)
-		http.Error(w, "Could not update quest", http.StatusInternalServerError)
+		log.Printf("Conversion Error: Invalid Quest ID %s", questIDStr)
+		http.Error(w, "Invalid Quest ID", http.StatusBadRequest)
+		return
+	}
+
+	// 2. Identify the User (Hardcoded to 1 for now)
+	userID := 1
+
+	// 3. CALL THE REPOSITORY FUNCTION
+	// This is the "Magic Link" that triggers the XP and Corral logic
+	err = CompleteQuest(r.Context(), DB, questID, userID)
+	if err != nil {
+		log.Printf("❌ Repository Error: %v", err)
+		http.Error(w, "Could not finalize quest completion", http.StatusInternalServerError)
 		return
 	}
 

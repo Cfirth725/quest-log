@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 )
 
 // GetActiveQuests retrieves all pending tasks for a specific user, including
@@ -58,6 +59,7 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestRespon
 // It calculates dynamic XP rewards based on user streaks and records the
 // event in an immutable ledger for historical auditing (The Weekly Corral).
 func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserID int) error {
+	log.Printf("!!! CompleteQuest CALLED for Quest:%d by User:%d", questID, completingUserID)
 	// Initialize a transaction to ensure atomic execution.
 	// This prevents partial writes where a quest is marked done but no XP is awarded.
 	tx, err := db.BeginTx(ctx, nil)
@@ -80,7 +82,7 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 	}
 
 	if currentStatus == "Completed" {
-		return fmt.Errorf("repository: quest [%d] already finalized")
+		return nil
 	}
 
 	// 2. Multiplier Logic: Retrieve current user streak from the persistent store
@@ -90,11 +92,12 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 		FROM users 
 		WHERE id = ?`, completingUserID).Scan(&currentStreak)
 	if err != nil {
+		log.Printf("DEBUG: Failed to find User ID %d in users table", completingUserID)
 		return fmt.Errorf("repository: user streak retrieval failed: %w", err)
 	}
 
 	// 3. XP Calculation Logic
-	earnedXP := baseXP + currentStreak
+	earnedXP := baseXP
 
 	// 4. Update Quest State: Mark as 'Completed' and update the temporal record
 	_, err = tx.ExecContext(ctx, `
@@ -116,7 +119,7 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 	// 6. User Reward Application: Increment streak/XP values
 	_, err = tx.ExecContext(ctx, `
 		UPDATE users 
-		SET dopamine_streak = dopamine_streak + ? 
+		SET dopamine_streak = dopamine_streak + 1 
 		WHERE id = ?`, earnedXP, completingUserID)
 	if err != nil {
 		return fmt.Errorf("repository: user reward application failed: %w", err)
@@ -127,6 +130,7 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 		return fmt.Errorf("repository: final transaction commit failed: %w", err)
 	}
 
+	log.Printf("SUCCESS: Quest %d completed by User %d. Awarded %d XP.", questID, completingUserID, earnedXP)
 	return nil
 }
 
@@ -154,10 +158,10 @@ func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (CorralSummar
 	err := db.QueryRowContext(ctx, `
     SELECT 
         COUNT(id), 
-        COALESCE(SUM(xp_awarded), 0) -- If it's NULL, make it 0
+        COALESCE(SUM(xp_awarded), 0) 
     FROM quest_completions 
     WHERE completed_by_user_id = ? 
-    AND completed_at >= date('now', '-7 days')`, userID).Scan(&summary.QuestCount, &summary.TotalXP)
+    AND datetime(completed_at) >= datetime('now', '-7 days')`, userID).Scan(&summary.QuestCount, &summary.TotalXP)
 
 	if err != nil {
 		return summary, err
@@ -165,12 +169,13 @@ func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (CorralSummar
 
 	// 2. Get the individual list of wins
 	rows, err := db.QueryContext(ctx, `
-		SELECT q.title, c.name, c.color_hex, qc.xp_awarded, qc.completed_at
-		FROM quest_completions qc
-		JOIN quests q ON qc.quest_id = q.id
-		JOIN categories c ON q.category_id = c.id
-		WHERE qc.completed_by_user_id = ?
-		ORDER BY qc.completed_at DESC`, userID)
+    	SELECT q.title, c.name, c.color_hex, qc.xp_awarded, qc.completed_at
+    	FROM quest_completions qc
+    	JOIN quests q ON qc.quest_id = q.id
+    	JOIN categories c ON q.category_id = c.id
+    	WHERE qc.completed_by_user_id = ?
+    	AND datetime(qc.completed_at) >= datetime('now', '-7 days')
+    	ORDER BY qc.completed_at DESC`, userID)
 
 	if err != nil {
 		return summary, err

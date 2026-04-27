@@ -2,12 +2,16 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 // DB acts as the global connection pool for the application lifecycle.
 var DB *sql.DB
+
+//go:embed schema.sql
+var schemaSQL string
 
 // Connect initializes the SQLite driver, configures performance pragmas,
 // and executes the schema migration suite.
@@ -115,61 +119,11 @@ func CorralCompletedQuests(db *sql.DB) (int64, error) {
 	return rows, err
 }
 
-// createTables executes the schema creation. Using "IF NOT EXISTS" ensures this
-// only runs the first time the app boots, or if a table was accidentally deleted.
+// createTables executes the schema creation.
 func createTables(db *sql.DB) error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		dopamine_streak INTEGER DEFAULT 0
-	);
-
-	CREATE TABLE IF NOT EXISTS categories (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		owner_id INTEGER DEFAULT 0,
-		name TEXT NOT NULL,
-		color_hex TEXT,
-		is_archived BOOLEAN DEFAULT 0,
-		UNIQUE(owner_id, name)
-	);
-
-	CREATE TABLE IF NOT EXISTS quests (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		owner_id INTEGER DEFAULT 0,
-		category_id INTEGER,
-		title TEXT NOT NULL,
-		difficulty INTEGER CHECK( difficulty IN (1, 2, 3) ),
-		base_xp INTEGER CHECK( base_xp IN (10, 25, 50) ),
-		is_non_negotiable BOOLEAN DEFAULT 0,
-		status TEXT DEFAULT 'Pending',
-		quest_type TEXT CHECK( quest_type IN ('One-Time', 'Daily', 'Repeating') ),
-		repeat_interval_days INTEGER DEFAULT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		last_completed_at DATETIME,
-		FOREIGN KEY(category_id) REFERENCES categories(id)
-	);
-
-	CREATE TABLE IF NOT EXISTS quest_completions (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		quest_id INTEGER,
-		completed_by_user_id INTEGER,
-		completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		xp_awarded INTEGER,
-		FOREIGN KEY(quest_id) REFERENCES quests(id)
-	);
-
-	CREATE TABLE IF NOT EXISTS gear_checks (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		quest_id INTEGER,
-		item_name TEXT NOT NULL,
-		is_gathered BOOLEAN DEFAULT 0,
-		FOREIGN KEY(quest_id) REFERENCES quests(id)
-	);
-	`
-
-	if _, err := db.Exec(schema); err != nil {
-		return fmt.Errorf("database: schema execution failed: %w", err)
+	_, err := db.Exec(schemaSQL)
+	if err != nil {
+		return fmt.Errorf("failed to apply embedded schema: %w", err)
 	}
 	return nil
 }
