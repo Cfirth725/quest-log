@@ -10,20 +10,22 @@ import (
 	"strings"
 )
 
-// Experience constants defining the reward economy for quest tiers.
+// Experience constants define the reward economy for various quest tiers.
+// These serve as the ground truth for XP distribution across the system.
 const (
 	XP_DUCK  = 1
 	XP_SHEEP = 5
 	XP_COW   = 10
 )
 
-// RenderTemplate handles the assembly and execution of HTML templates,
-// incorporating the base layout and localized partials.
+// RenderTemplate orchestrates the assembly and execution of HTML templates.
+// It merges the base layout with specific view files and injects shared partials
+// for modular UI components like quest cards.
 func RenderTemplate(w http.ResponseWriter, tmplName string, data interface{}) {
 	basePath := "templates/layouts/base.html"
 	pagePath := fmt.Sprintf("templates/%s.html", tmplName)
 
-	// Initialize template with base layout and the specific view
+	// Initialize the template engine with core layout files.
 	tmpl, err := template.ParseFiles(basePath, pagePath)
 	if err != nil {
 		log.Printf("Internal Error: Failed to parse template files: %v", err)
@@ -31,23 +33,24 @@ func RenderTemplate(w http.ResponseWriter, tmplName string, data interface{}) {
 		return
 	}
 
-	// Load optional partials for quest card rendering
+	// Load shared UI partials to support reusable components across different views.
 	_, err = tmpl.ParseGlob("templates/partials/*.html")
 	if err != nil {
 		log.Printf("Partial Load Warning: %v", err)
 	}
 
-	// Execute the "base" template which acts as the entry point
+	// Execute the "base" template, which serves as the primary HTML wrapper.
 	err = tmpl.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		log.Printf("Execution Error: Failed to render template: %v", err)
 	}
 }
 
-// ViewPastureHandler retrieves active quests and renders the primary dashboard view.
+// ViewPastureHandler retrieves active quest data and renders the primary dashboard.
+// It serves as the main entry point for the "Milford Node" user experience.
 func ViewPastureHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Fetching with CurrentUserID = 1 (System Owner)
+		// Currently defaulting to UserID 1 for the system owner's context.
 		activeQuests, err := GetActiveQuests(r.Context(), db, 1)
 		if err != nil {
 			log.Printf("Database Error: Failed to retrieve active quests: %v", err)
@@ -60,8 +63,9 @@ func ViewPastureHandler(db *sql.DB) http.HandlerFunc {
 }
 
 // ----- New Quest Logic -----
-// handleCreateQuest processes the 'Quest Forge' form submission, applying
-// input validation and calculating reward values before persistence.
+// handleCreateQuest processes 'Quest Forge' submissions. It enforces a strict
+// "Ghost Guard" policy for input validation and ensures that economy-impacting
+// values (like XP) are calculated server-side rather than accepted from the client.
 func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Redirect(w, r, "/newquest", http.StatusSeeOther)
@@ -75,13 +79,15 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract form inputs
+	// Extract client-side inputs for transformation.
 	title := r.FormValue("title")
 	categoryID := r.FormValue("category_id")
 	difficulty := r.FormValue("difficulty")
 	ownerIDStr := r.FormValue("owner_id")
+	questType := r.FormValue("quest_type")
+	intervalStr := r.FormValue("repeat_interval_days")
 
-	// Convert and Validate owner_id
+	// Validate Ownership: Ensures assignments remain within authorized system ranges.
 	ownerID, err := strconv.Atoi(ownerIDStr)
 	if err != nil {
 		log.Printf("Security Alert: Non-integer owner_id received: %s", ownerIDStr)
@@ -99,6 +105,7 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// --- GHOST GUARD: Input Sanitization ---
+	// Data Sanitization: Prevent empty titles or malformed strings from persisting.
 	cleanTitle := strings.TrimSpace(title)
 	if cleanTitle == "" {
 		log.Println("Validation Warning: Blocked empty quest title submission.")
@@ -107,6 +114,7 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// --- HARD-CODED ECONOMY: XP Calculation ---
+	// Economy Enforcement: Determine XP based on validated difficulty tiers.
 	var calculatedXP int
 	switch difficulty {
 	case "1":
@@ -122,17 +130,36 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// --- PRIORITY SHIELD: Triage Handling ---
-	priorityValue := r.FormValue("is_non_negotiable")
+	// Triage Logic: Determine if the quest qualifies for Priority Shield status.
 	isNonNegotiable := 0
-	if priorityValue == "1" {
+	if r.FormValue("is_non_negotiable") == "1" {
 		isNonNegotiable = 1
 	}
 
-	// Database Injection
-	query := `INSERT INTO quests (title, category_id, difficulty, base_xp, is_non_negotiable, status, owner_id, quest_type)
-        VALUES (?, ?, ?, ?, ?, 'active', ?, 'One-Time')`
+	// Lifecycle Validation: Ensure the quest type adheres to the database schema.
+	validTypes := map[string]bool{"One-Time": true, "Daily": true, "Repeating": true}
+	if !validTypes[questType] {
+		log.Printf("Security Alert: Invalid quest_type: %s", questType)
+		http.Error(w, "Invalid quest type.", http.StatusBadRequest)
+		return
+	}
 
-	_, err = DB.Exec(query, cleanTitle, categoryID, difficulty, calculatedXP, isNonNegotiable, ownerID)
+	// Temporal Configuration: Handle interval metadata for recurring lifecycles.
+	var interval sql.NullInt64
+	if questType == "Repeating" && intervalStr != "" {
+		val, err := strconv.Atoi(intervalStr)
+		if err == nil && val > 0 {
+			interval = sql.NullInt64{Int64: int64(val), Valid: true}
+		} else {
+			interval = sql.NullInt64{Int64: 1, Valid: true}
+		}
+	}
+
+	// Persistent Injection: Commit the quest to the system of record.
+	query := `INSERT INTO quests (title, category_id, difficulty, base_xp, is_non_negotiable, status, owner_id, quest_type, repeat_interval_days)
+        VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?)`
+
+	_, err = DB.Exec(query, cleanTitle, categoryID, difficulty, calculatedXP, isNonNegotiable, ownerID, questType, interval)
 	if err != nil {
 		log.Printf("Database Error: Failed to insert new quest: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -143,15 +170,14 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 }
 
 // ----- Quest Complete Logic -----
-// handleCompleteQuest updates a quest status to 'Completed' and triggers
-// the logic for the Weekly Corral archiving.
+// handleCompleteQuest facilitates the transition of a task from 'active' to 'Completed'.
+// It acts as the bridge between the HTTP request and the transactional repository logic.
 func handleCompleteQuest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// 1. Get the Quest ID from the form
 	questIDStr := r.FormValue("quest_id")
 	if questIDStr == "" {
 		log.Println("Validation Error: Complete request received without Quest ID.")
@@ -166,11 +192,10 @@ func handleCompleteQuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Identify the User (Hardcoded to 1 for now)
+	// Identify the User (Hardcoded to 1 for now)
 	userID := 1
 
-	// 3. CALL THE REPOSITORY FUNCTION
-	// This is the "Magic Link" that triggers the XP and Corral logic
+	// Call the transaction-wrapped repository logic to handle XP and audit logging.
 	err = CompleteQuest(r.Context(), DB, questID, userID)
 	if err != nil {
 		log.Printf("❌ Repository Error: %v", err)
@@ -178,6 +203,5 @@ func handleCompleteQuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect to clear the POST state and refresh the Pasture
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

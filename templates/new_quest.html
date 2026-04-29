@@ -39,6 +39,38 @@
             <small>Base XP is calculated server-side to ensure economy integrity.</small>
         </div>
 
+        <div class="form-group">
+            <label for="quest_type">Quest Frequency</label>
+            <select id="quest_type" name="quest_type" onchange="toggleInterval()">
+                <option value="One-Time" selected>One-Time Bounty</option>
+                <option value="Daily">Daily Task</option>
+                <option value="Repeating">Recurring Quest</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="interval_group" style="display: none; border-left: 3px solid var(--milford-green); padding-left: 15px;">
+            <label for="repeat_interval_days">Repeat Interval (Days)</label>
+            <input type="number" id="repeat_interval_days" name="repeat_interval_days" min="1" placeholder="e.g. 7 for weekly">
+            <small>Quest will respawn X days after it is marked completed.</small>
+        </div>
+
+        <script>
+            function toggleInterval() {
+                const type = document.getElementById('quest_type').value;
+                const intervalGroup = document.getElementById('interval_group');
+                const intervalInput = document.getElementById('repeat_interval_days');
+                
+                if (type === 'Repeating') {
+                    intervalGroup.style.display = 'block';
+                    intervalInput.required = true;
+                } else {
+                    intervalGroup.style.display = 'none';
+                    intervalInput.required = false;
+                    intervalInput.value = '';
+                }
+            }
+        </script>
+
         <div class="checkbox-label-wrapper">
             <input type="checkbox" id="is_non_negotiable" name="is_non_negotiable" value="1">
             <label for="is_non_negotiable" style="font-weight: bold; color: var(--milford-green); margin-bottom: 0; cursor: pointer;">

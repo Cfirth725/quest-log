@@ -7,30 +7,35 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// DB acts as the global connection pool for the application lifecycle.
+// DB serves as the primary connection pool for the application.
+// It is initialized during the system startup phase and shared across handlers.
 var DB *sql.DB
 
+// schemaSQL utilizes Go's embed directive to package the 'schema.sql' file
+// directly into the binary, ensuring consistent deployments across environments.
+//
 //go:embed schema.sql
 var schemaSQL string
 
 // Connect initializes the SQLite driver, configures performance pragmas,
 // and executes the schema migration suite.
 func Connect() (*sql.DB, error) {
-	// Initialize connection to the local SQLite file.
-	// SQLite will automatically create the file if it does not exist.
+	// Initialize a connection to the local SQLite database.
+	// The driver will create 'quests.db' automatically if it is not present
 	db, err := sql.Open("sqlite3", "./quests.db")
 	if err != nil {
 		return nil, fmt.Errorf("database: failed to open connection: %w", err)
 	}
 
-	// Verify connectivity to the database file.
+	// Verify the health of the database connection before proceeding.
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("database: connectivity check failed: %w", err)
 	}
 
-	// Configure SQLite for high-concurrency and data safety.
-	// WAL (Write-Ahead Logging) allows simultaneous reads and writes.
-	// Foreign Key enforcement is explicitly enabled to maintain relational integrity.
+	// Apply SQLite PRAGMAs to optimize for the Quest Log's specific requirements:
+	// 1. WAL (Write-Ahead Logging) enables concurrent read/write operations.
+	// 2. NORMAL Synchronous mode balances data safety with write performance.
+	// 3. Foreign Key enforcement is explicitly enabled to maintain relational integrity.
 	pragmas := `
 		PRAGMA journal_mode = WAL;
 		PRAGMA synchronous = NORMAL;
@@ -40,7 +45,7 @@ func Connect() (*sql.DB, error) {
 		return nil, fmt.Errorf("database: failed to apply performance pragmas: %w", err)
 	}
 
-	// Execute idempotent schema migrations.
+	// Synchronize the database state with the embedded schema definition.
 	if err := createTables(db); err != nil {
 		return nil, fmt.Errorf("database: schema migration failed: %w", err)
 	}
@@ -48,7 +53,8 @@ func Connect() (*sql.DB, error) {
 	return db, nil
 }
 
-// GetCategories retrieves active quest categories for the 'Quest Forge' interface.
+// GetCategories retrieves all non-archived quest categories.
+// It is used to populate selection menus in the Quest Forge and dashboard filters.
 func GetCategories(db *sql.DB) ([]Category, error) {
 	rows, err := db.Query("SELECT id, name, color_hex FROM categories WHERE is_archived = 0 ORDER BY name ASC")
 	if err != nil {
@@ -71,7 +77,8 @@ func GetCategories(db *sql.DB) ([]Category, error) {
 	return categories, nil
 }
 
-// GetUsers retrieves all active users for quest assignment.
+// GetUsers retrieves a list of active household participants.
+// This data is used for quest attribution and reward distribution.
 func GetUsers(db *sql.DB) ([]User, error) {
 	query := "SELECT id, name, dopamine_streak FROM users ORDER BY name ASC"
 	rows, err := db.Query(query)
@@ -92,38 +99,43 @@ func GetUsers(db *sql.DB) ([]User, error) {
 	return users, nil
 }
 
-// ----- Completed Quests -----
-// CorralCompletedQuests shifts finished 'One-Time' tasks into 'Archived' status.
+// CorralCompletedQuests executes a bulk update to transition 'One-Time' tasks
+// into an 'Archived' state. This cleanses the UI pasture while preserving
+// historical records in the completions ledger.
 func CorralCompletedQuests(db *sql.DB) (int64, error) {
+	// A transaction is utilized here to ensure that the archival process
+	// is atomic—preventing partial updates if a system failure occurs.
 	tx, err := db.Begin()
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("database: failed to begin archival transaction: %w", err)
 	}
+	defer tx.Rollback()
 
-	// One time quests
 	query := `
 		UPDATE quests 
 		SET status = 'Archived' 
 		WHERE quest_type = 'One-Time' 
-		AND status = 'Pending'
-		AND id IN (SELECT quest_id FROM quest_completions);`
+		AND status = 'Completed';`
 
 	result, err := tx.Exec(query)
 	if err != nil {
-		tx.Rollback()
-		return 0, err
+		return 0, fmt.Errorf("database: archival update failed: %w", err)
 	}
 
 	rows, _ := result.RowsAffected()
-	err = tx.Commit()
-	return rows, err
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("database: archival commit failed: %w", err)
+	}
+
+	return rows, nil
 }
 
-// createTables executes the schema creation.
+// createTables applies the raw SQL schema embedded at compile-time.
+// This method is idempotent, meaning it can be run safely on every startup.
 func createTables(db *sql.DB) error {
 	_, err := db.Exec(schemaSQL)
 	if err != nil {
-		return fmt.Errorf("failed to apply embedded schema: %w", err)
+		return fmt.Errorf("database: failed to execute embedded schema: %w", err)
 	}
 	return nil
 }

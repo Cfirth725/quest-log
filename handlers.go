@@ -7,8 +7,9 @@ import (
 )
 
 // --- Quest Management Routes (The Forge) ---
-// Route: GET /newquest
-// Renders the quest creation interface with dynamic category data
+// handleNewQuest serves the 'Quest Forge' creation interface.
+// It aggregates necessary reference data, including categories and users,
+// to populate dynamic form elements.
 func handleNewQuest(w http.ResponseWriter, r *http.Request) {
 	categories, err := GetCategories(DB)
 	if err != nil {
@@ -27,7 +28,9 @@ func handleNewQuest(w http.ResponseWriter, r *http.Request) {
 	RenderTemplate(w, "new_quest", data)
 }
 
-// GET /settings
+// handleSettings renders the administrative dashboard.
+// It allows users to manage the system's organizational hierarchy,
+// specifically the category and user definitions.
 func handleSettings(w http.ResponseWriter, r *http.Request) {
 	categories, err := GetCategories(DB)
 	if err != nil {
@@ -38,56 +41,63 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 	RenderTemplate(w, "settings", data)
 }
 
-// POST /categories/create
+// handleCreateCategory processes submissions for new thematic groupings.
+// It enforces basic input sanitization and ensures categorical names
+// meet the system's non-empty string requirements.
 func handleCreateCategory(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(r.FormValue("name"))
 	color := r.FormValue("color")
 
 	if name == "" {
-		http.Error(w, "Name required", http.StatusBadRequest)
+		http.Error(w, "Validation Error: Category name is required.", http.StatusBadRequest)
 		return
 	}
 
 	_, err := DB.Exec("INSERT INTO categories (name, color_hex) VALUES (?, ?)", name, color)
 	if err != nil {
-		log.Printf("DB Error: %v", err)
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
+		log.Printf("Database Error: Failed to create category: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/settings", http.StatusSeeOther)
 }
 
-// POST /categories/delete
+// handleDeleteCategory facilitates the removal of organizational categories.
+// It implements a 'Safety Guard' to prevent the deletion of categories
+// that still have associated quests, preserving relational integrity.
 func handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("category_id")
 
-	// THE SAFETY GUARD
+	// RELATIONAL INTEGRITY CHECK: Verify no orphaned quests will be created.
 	var count int
 	err := DB.QueryRow("SELECT COUNT(*) FROM quests WHERE category_id = ?", id).Scan(&count)
 	if err != nil {
-		log.Printf("DB Error: %v", err)
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
+		log.Printf("Database Error: Integrity check failed: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	if count > 0 {
-		http.Error(w, "Conflict: Category has active quests.", http.StatusConflict)
+		// HTTP 409 Conflict is the standard response for state violations.
+		http.Error(w, "Conflict: Cannot delete category with active dependencies.", http.StatusConflict)
 		return
 	}
 
 	_, err = DB.Exec("DELETE FROM categories WHERE id = ?", id)
 	if err != nil {
-		log.Printf("DB Error: %v", err)
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
+		log.Printf("Database Error: Failed to remove category: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/settings", http.StatusSeeOther)
 }
 
 // ----- Corral Logic -----
-// POST /corral/archive
+// handleCorralQuests triggers the bulk archival process for finished tasks.
+// This endpoint is the primary mechanism for clearing the pasture while
+// maintaining a permanent record in the completion ledger.
 func handleCorralQuests(w http.ResponseWriter, r *http.Request) {
-	// Only allow POST for actions that change data
+	// Strict Method Enforcement: Idempotent changes must use POST.
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -101,12 +111,14 @@ func handleCorralQuests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Success: %d quests moved to The Corral.", count)
-
-	// Redirect back to the pasture (or a new Corral summary page)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+// handleViewCorral renders the historical reporting dashboard.
+// It retrieves the Weekly Summary metrics to provide users with a
+// bird's-eye view of their recent accomplishments.
 func handleViewCorral(w http.ResponseWriter, r *http.Request) {
+	// Context is passed from the request to allow for cancellation propogation.
 	// For now, using User ID 1
 	summary, err := GetWeeklySummary(r.Context(), DB, 1)
 	if err != nil {
