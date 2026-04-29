@@ -216,6 +216,15 @@ small {
 }
 .bad-brain-btn:hover { background: #fee2e2; }
 
+button.bad-brain-btn.active-mode {
+    background: #3498DB !important;
+    color: #ffffff !important;
+    border: 1px solid #2980B9 !important;
+}
+button.bad-brain-btn.active-mode:hover {
+    background: #2980B9 !important;
+}
+
 
 /* --- 6. Specialized UI (Settings & Tables) --- */
 .settings-table {

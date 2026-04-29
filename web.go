@@ -46,19 +46,34 @@ func RenderTemplate(w http.ResponseWriter, tmplName string, data interface{}) {
 	}
 }
 
-// ViewPastureHandler retrieves active quest data and renders the primary dashboard.
-// It serves as the main entry point for the "Milford Node" user experience.
+// ViewPastureHandler coordinates the retrieval of active tasks and manages the
+// dashboard's display state. It supports a 'Momentum Mode' filter to assist
+// with cognitive load management during high-pressure barometric events.
 func ViewPastureHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Currently defaulting to UserID 1 for the system owner's context.
-		activeQuests, err := GetActiveQuests(r.Context(), db, 1)
+		// Extract the Momentum Mode toggle from the URL query parameters.
+		momentumMode := r.URL.Query().Get("momentum") == "true"
+
+		// Retrieve tasks from the repository. Defaulting to UserID 1 for the system owner.
+		activeQuests, err := GetActiveQuests(r.Context(), db, 1, momentumMode)
 		if err != nil {
 			log.Printf("Database Error: Failed to retrieve active quests: %v", err)
 			http.Error(w, "Failed to load quests", http.StatusInternalServerError)
 			return
 		}
 
-		RenderTemplate(w, "pasture", activeQuests)
+		// Encapsulate the result set and the current filter state into an anonymous
+		// struct to provide a unified context for the HTML template engine.
+		data := struct {
+			Quests       []QuestResponse
+			MomentumMode bool
+		}{
+			Quests:       activeQuests,
+			MomentumMode: momentumMode,
+		}
+
+		// Render the primary dashboard view using the combined data context.
+		RenderTemplate(w, "pasture", data)
 	}
 }
 

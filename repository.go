@@ -6,18 +6,25 @@ import (
 	"fmt"
 )
 
-// GetActiveQuests retrieves all actionable tasks for a specific user, including
-// shared household entries. It filters for 'active' status and keeps 'One-Time'
-// completed tasks visible for the current session. Results are sorted primarily
-// by status (active first) and secondarily by the Priority Shield status.
-func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestResponse, error) {
-	query := `
+// GetActiveQuests retrieves all actionable tasks for a specific user.
+// If momentumMode is enabled, it further restricts the result set to only
+// show 'Non-Negotiable' priority tasks to reduce cognitive load.
+func GetActiveQuests(ctx context.Context, db *sql.DB, userID int, momentumMode bool) ([]QuestResponse, error) {
+	// 1. Define the optional filter
+	momentumFilter := ""
+	if momentumMode {
+		momentumFilter = "AND q.is_non_negotiable = 1"
+	}
+
+	// 2. Inject the filter into the SQL string
+	query := fmt.Sprintf(`
     SELECT 
         q.id, q.title, q.difficulty, q.base_xp, q.quest_type, q.is_non_negotiable, q.status, q.created_at,
         c.name, c.color_hex
     FROM quests q
     LEFT JOIN categories c ON q.category_id = c.id
     WHERE (q.owner_id = ? OR q.owner_id = 0)
+    %s 
     AND (
         q.status = 'active' 
         OR (q.status = 'Completed' AND q.quest_type = 'One-Time')
@@ -26,7 +33,7 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int) ([]QuestRespon
         CASE WHEN q.status = 'active' THEN 0 ELSE 1 END ASC,
         q.is_non_negotiable DESC, 
         q.created_at ASC
-	`
+	`, momentumFilter)
 
 	// Using QueryContext to ensure database operations respect application lifecycle
 	// and client-side timeouts.

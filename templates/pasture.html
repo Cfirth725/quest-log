@@ -7,13 +7,15 @@
         </p>
     </div>
 
-    <button class="bad-brain-btn" title="Enable Momentum Mode (Priority Shield Only)">
-        🚨 Bad Brain Day
-    </button>
+    <a href="/?momentum={{if .MomentumMode}}false{{else}}true{{end}}" style="text-decoration: none;">
+        <button class="bad-brain-btn {{if .MomentumMode}}active-mode{{end}}">
+            {{if .MomentumMode}}🛡️ Normal Mode{{else}}🚨 Bad Brain Day{{end}}
+        </button>
+    </a>
 </div>
 
 <div class="quest-list">
-    {{ range . }}
+    {{ range .Quests }}
         {{ template "quest_card" . }}
     {{ else }}
         <div class="empty-state">
