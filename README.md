@@ -47,7 +47,7 @@ Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replac
 - [x] **Cold Start Resilience:** Added idempotent startup checks to prevent missed cycles during downtime.
 
 #### **Phase 4: Momentum & Telemetry (IN PROGRESS)**
-- [ ] **The "Bad Brain Day" Momentum Filter:** UI-triggered backend toggle to restrict views to `is_non_negotiable` tasks.
+- [x] **The "Bad Brain Day" Momentum Filter:** UI-triggered backend toggle to restrict views to `is_non_negotiable` tasks.
 - [ ] **The Gear Check Lock:** Pre-flight validation step where quests remain locked until `gear_checks` are toggled.
 
 #### **Phase 5: The Ingestion Bridge & Telemetry**
