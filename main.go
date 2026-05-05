@@ -62,6 +62,8 @@ func main() {
 	mux.HandleFunc("GET /settings", handleSettings)
 	mux.HandleFunc("POST /categories/create", handleCreateCategory)
 	mux.HandleFunc("POST /categories/delete", handleDeleteCategory)
+	mux.HandleFunc("POST /settings/archive", ArchiveQuestHandler)
+	mux.HandleFunc("POST /settings/downgrade/", DowngradeQuestHandler)
 
 	log.Println("Initialization: Service routes registered successfully.")
 

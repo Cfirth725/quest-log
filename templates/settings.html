@@ -40,5 +40,33 @@
             </tbody>
         </table>
     </section>
+
+    <section class="form-container" style="margin-top: 2rem; max-width: 800px;">
+        <h3>⚔️ Active Quests</h3>
+        <table class="settings-table">
+            <thead>
+                <tr>
+                    <th>Quest Title</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Quests }}
+                    {{ if ne .QuestType "One-Time" }} <tr>
+                        <td><strong>{{ .Title }}</strong></td>
+                        <td><span class="badge">{{ .QuestType }}</span></td>
+                        <td style="display: flex; gap: 10px;">
+                            <form action="/settings/downgrade/" method="POST">
+                                <input type="hidden" name="id" value="{{ .ID }}">
+                                <button type="submit" class="delete-btn-text" style="color: #f59e0b;">⏳ Make One-Time</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {{ end }}
+                {{ end }}
+            </tbody>
+        </table>
+    </section>
 </div>
 {{ end }}

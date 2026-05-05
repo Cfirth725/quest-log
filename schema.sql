@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS quests (
     repeat_interval_days INTEGER DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_completed_at DATETIME,
+    deleted_at DATETIME,
     FOREIGN KEY(category_id) REFERENCES categories(id)
 );
 

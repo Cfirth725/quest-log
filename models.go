@@ -89,3 +89,9 @@ type SpawnerResult struct {
 	QuestsSpawned int
 	Errors        []error
 }
+
+// Setting Page Data
+type SettingsPageData struct {
+	Categories []Category
+	Quests     []QuestResponse
+}

@@ -24,6 +24,7 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int, momentumMode b
     FROM quests q
     LEFT JOIN categories c ON q.category_id = c.id
     WHERE (q.owner_id = ? OR q.owner_id = 0)
+	AND q.deleted_at IS NULL
     %s 
     AND (
         q.status = 'active' 
@@ -204,4 +205,26 @@ func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (CorralSummar
 	}
 
 	return summary, nil
+}
+
+// SoftDeleteQuest marks a specific quest as archived by setting a timestamp.
+func SoftDeleteQuest(ctx context.Context, db *sql.DB, id int) error {
+	query := `UPDATE quests SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?`
+
+	_, err := db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("repository: failed to soft delete quest %d: %w", id, err)
+	}
+
+	return nil
+}
+
+// DowngradeToOneTime changes a repeating/daily quest into a one-time quest.
+func DowngradeToOneTime(ctx context.Context, db *sql.DB, id int) error {
+	query := `UPDATE quests SET quest_type = 'One-Time' WHERE id = ?`
+	_, err := db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("repository: failed to downgrade quest %d: %w", id, err)
+	}
+	return nil
 }

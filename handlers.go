@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -32,12 +33,27 @@ func handleNewQuest(w http.ResponseWriter, r *http.Request) {
 // It allows users to manage the system's organizational hierarchy,
 // specifically the category and user definitions.
 func handleSettings(w http.ResponseWriter, r *http.Request) {
+	// For now since I don't have a session manager yet.
+	currentUserID := 1
+
+	// 1. Fetch Categories
 	categories, err := GetCategories(DB)
 	if err != nil {
-		log.Printf("Internal Error: %v", err)
+		log.Printf("Internal Error (Categories): %v", err)
 	}
 
-	data := struct{ Categories []Category }{Categories: categories}
+	// 2. Fetch Active Quests
+	quests, err := GetActiveQuests(r.Context(), DB, currentUserID, false)
+	if err != nil {
+		log.Printf("Internal Error (Quests): %v", err)
+	}
+
+	// 3. Update the struct to include Quests
+	data := SettingsPageData{
+		Categories: categories,
+		Quests:     quests,
+	}
+
 	RenderTemplate(w, "settings", data)
 }
 
@@ -128,4 +144,43 @@ func handleViewCorral(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RenderTemplate(w, "corral", summary)
+}
+
+func ArchiveQuestHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/settings", http.StatusSeeOther)
+		return
+	}
+
+	idStr := r.FormValue("id")
+	id, _ := strconv.Atoi(idStr)
+
+	// Call the function in repository.go
+	err := SoftDeleteQuest(r.Context(), DB, id)
+	if err != nil {
+		http.Error(w, "Failed to archive quest", http.StatusInternalServerError)
+		return
+	}
+
+	// Redirect back to settings to see the updated list
+	http.Redirect(w, r, "/settings", http.StatusSeeOther)
+}
+
+func DowngradeQuestHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/settings", http.StatusSeeOther)
+		return
+	}
+
+	idStr := r.FormValue("id")
+	id, _ := strconv.Atoi(idStr)
+
+	err := DowngradeToOneTime(r.Context(), DB, id)
+	if err != nil {
+		log.Printf("Error downgrading quest: %v", err)
+		http.Error(w, "Failed to downgrade quest", 500)
+		return
+	}
+
+	http.Redirect(w, r, "/settings", http.StatusSeeOther)
 }
