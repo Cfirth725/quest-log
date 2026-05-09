@@ -1,12 +1,14 @@
 /* ================================================================
    THE QUEST LOG DESIGN SYSTEM
    Theme: High-Contrast "Pasture" Green
-   Updated: April 2026
+   Version: 2.1 (Streamlined Management Update)
+   Updated: May 2026
 ================================================================ 
 */
 
+/* --- 1. GLOBAL TOKENS & VARIABLES --- */
 :root {
-/* Color Palette */
+    /* Color Palette */
     --bg-color: #f0fdf4;        /* Soft green wash */
     --primary-green: #166534;   /* Deep forest for text/accents */
     --border-color: #dcfce7;    /* Light mint for dividers */
@@ -14,21 +16,28 @@
     --text-secondary: #666666;
     --danger-red: #dc2626;      /* Bad Brain / Delete actions */
     --xp-gold: #ca8a04;         /* Reward highlights */
+
+    /* Layout Tokens */
+    --container-max: 800px;
+    --radius-lg: 12px;
+    --radius-md: 8px;
+    --radius-sm: 4px;
 }
 
-/* --- 1. Base Layout Architecture --- */
+
+/* --- 2. BASE ARCHITECTURE --- */
 body { 
     font-family: system-ui, -apple-system, sans-serif; 
     background-color: var(--bg-color); 
+    color: #111;
     margin: 0; 
     display: flex; 
     flex-direction: column; 
-    min-height: 100vh; /* Keeps footer at bottom */
+    min-height: 100vh; /* Ensures footer stays at bottom */
 }
 
-/* Global width constraint for scannability */
 .container { 
-    max-width: 800px; 
+    max-width: var(--container-max); 
     margin: 0 auto; 
     width: 100%; 
 }
@@ -38,7 +47,7 @@ main {
     padding: 2rem 1rem; 
 }
 
-/* --- 2. Navigation System --- */
+/* --- 3. NAVIGATION & FOOTER --- */
 nav { 
     background: white; 
     border-bottom: 2px solid var(--border-color); 
@@ -58,34 +67,20 @@ nav {
     font-weight: bold;
 }
 
-/* --- 3. Component Library --- */
+footer { 
+    text-align: center; 
+    padding: 1rem; 
+    font-size: 0.8rem; 
+    color: var(--text-secondary); 
+    background: white; 
+}
 
-/* --- Pasture Styles --- */
+/* --- 4. THE PASTURE (DASHBOARD) --- */
 .pasture-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     margin-bottom: 2rem;
-}
-
-/* Styling for herded sheep (Completed quests) */
-.quest-done {
-    opacity: 0.6;
-    background-color: #f9fafb; /* Light gray background */
-    border-style: dashed;      /* Dashed border implies "finished" */
-    filter: grayscale(0.4);    /* Tone down the colors */
-    pointer-events: none;      /* Prevents clicking anything inside while completed */
-}
-
-.badge-done {
-    background: #dcfce7;       /* Very light green */
-    color: var(--primary-green);
-    font-size: 0.7rem;
-    font-weight: bold;
-    padding: 2px 8px;
-    border-radius: 12px;
-    margin-left: 10px;
-    text-transform: uppercase;
 }
 
 /* Displayed when all tasks are done (Zero-Inbox state) */
@@ -94,14 +89,14 @@ nav {
     padding: 3rem;
     background: white;
     border: 2px dashed #bbf7d0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
 }
 
-/* --- Quest Card Styles --- */
+/* --- 5. QUEST COMPONENT LIBRARY --- */
 .quest-card {
     background: white;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 1rem 1.5rem;
     margin-bottom: 1rem;
     display: flex;
@@ -115,38 +110,78 @@ nav {
     height: 40px;
     border-radius: 3px;
     margin-right: 1rem;
-    /* Color injected via Go Template variable --dynamic-cat-color */
     background-color: var(--dynamic-cat-color); 
 }
 
 .quest-title { margin: 0; font-size: 1.1rem; color: #111; }
-.quest-meta { font-size: 0.85rem; color: #666; margin-top: 4px; }
-.xp-text { color: var(--xp-gold); font-weight: bold; }
 
-/* Badge for "Non-Negotiable" status */
+.quest-meta {
+    font-size: 0.85rem; 
+    color: var(--text-secondary);
+    margin-top: 4px; 
+}
+
+.quest-type-label {
+    font-style: italic;
+    margin-left: 2px;
+    opacity: 0.8;
+}
+
+/* Status: Handled/Completed State */
+.quest-done {
+    opacity: 0.6;
+    background-color: #f9fafb;
+    border-style: dashed;
+    filter: grayscale(0.4);
+    pointer-events: none;
+}
+
+/* --- 6. BADGES & TAGS --- */
+.badge-done {
+    background: #dcfce7;
+    color: var(--primary-green);
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 10px;
+    text-transform: uppercase;
+}
+
 .badge-must {
     background: #fee2e2;
     color: #991b1b;
     font-size: 0.7rem;
     font-weight: bold;
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     text-transform: uppercase;
     margin-left: 8px;
 }
 
-/* --- 4. Forms & Data Entry --- */
+.status-tag {
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.status-active { background-color: #fef9c3; color: #854d0e; }
+.status-done { background-color: #dcfce7; color: #166534; }
+
+.xp-text { color: var(--xp-gold); font-weight: bold; }
+
+/* --- 7. FORMS & DATA ENTRY --- */
 .form-container {
     background: white;
     padding: 2rem;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
-    max-width: 500px;
-    margin: 0 auto;
+    margin-bottom: 2rem;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
-/* Vertical spacing for form rows */
 .form-group { margin-bottom: 1.5rem; }
 
 label { 
@@ -162,39 +197,32 @@ input, select, textarea {
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 1rem; 
-    box-sizing: border-box; /* Prevents padding from expanding width */
+    box-sizing: border-box;
 }
 
 /* Specialized wrapper for Checkbox/Label pairs */
 .checkbox-label-wrapper {
-    display: flex;
+    display: flex; 
     align-items: center; 
-    gap: 10px;
-    margin: 15px 0;
-    cursor: pointer;
+    gap: 10px; 
+    margin: 15px 0; 
+    cursor: pointer; 
 }
 
 .checkbox-label-wrapper input {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    margin: 0;
+    width: 20px; 
+    height: 20px; 
+    margin: 0; 
+    cursor: pointer; 
 }
 
-small {
-    display: block;
-    color: #666;
-    margin-top: 0.5rem;
-    font-style: italic;
-}
-
-/* --- 5. Interactive Elements (Buttons) --- */
+/* --- 8. BUTTONS & INTERACTION --- */
 .submit-btn, .complete-btn {
     background: var(--primary-green);
     color: white;
     border: none;
     padding: 0.6rem 1.2rem;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-weight: bold;
     transition: transform 0.1s, opacity 0.2s;
@@ -202,8 +230,8 @@ small {
 
 .submit-btn { width: 100%; padding: 1rem; font-size: 1.1rem; }
 .submit-btn:hover, .complete-btn:hover { opacity: 0.9; transform: scale(1.02); }
-.submit-btn:active { transform: scale(0.98); }
 
+/* Bad Brain Day Toggle */
 .bad-brain-btn {
     background: #fef2f2;
     color: var(--danger-red);
@@ -221,13 +249,28 @@ small {
     color: #ffffff !important;
     border-color: #2980B9 !important;
 }
-.bad-brain-btn:hover { background: #fee2e2; }
 .bad-brain-btn.active-mode:hover {
     background-color: #2980B9 !important;
 }
 
+/* --- 9. QUEST LOG SETTINGS & TABLES --- */
+.settings-main-title {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--primary-green);
+}
 
-/* --- 6. Specialized UI (Settings & Tables) --- */
+.settings-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.settings-wrapper .form-container {
+    max-width: 100%; 
+    width: 100%;
+}
+
 .settings-table {
     width: 100%;
     border-collapse: collapse;
@@ -240,7 +283,18 @@ small {
     border-bottom: 1px solid var(--border-color);
 }
 
-/* Circle preview for category colors */
+.delete-btn-text {
+    background: none;
+    border: none;
+    color: var(--danger-red);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.delete-btn-text:hover {
+    text-decoration: underline;
+}
+
 .category-preview-dot {
     display: inline-block;
     width: 20px;
@@ -248,15 +302,10 @@ small {
     border-radius: 50%;
     vertical-align: middle;
     border: 1px solid rgba(0,0,0,0.1); 
-    /* color-hex is injected via style="--dot-color: {{ .ColorHex }}" */
     background-color: var(--dot-color, #ccc); 
 }
 
-/* --- 7. Utility & Misc --- */
-footer { 
-    text-align: center; 
-    padding: 1rem; 
-    font-size: 0.8rem; 
-    color: var(--text-secondary); 
-    background: white; 
-}
+/* Layout Utilities */
+.inline-form { display: flex; gap: 10px; align-items: center; }
+.color-picker { width: 60px !important; padding: 2px !important; height: 42px; }
+.small-btn { width: auto !important; padding: 0.5rem 1.5rem !important; }
