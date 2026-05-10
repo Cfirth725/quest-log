@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
+	"os"
 )
 
 // DB serves as the primary connection pool for the application.
@@ -20,14 +21,21 @@ var schemaSQL string
 // Connect initializes the SQLite driver, configures performance pragmas,
 // and executes the schema migration suite.
 func Connect() (*sql.DB, error) {
-	// Initialize a connection to the local SQLite database.
-	// The driver will create 'quests.db' automatically if it is not present
-	db, err := sql.Open("sqlite3", "./quests.db")
+	// 1. Pull the path from the environment variable (e.g., /app/quests.db)
+	dbPath := os.Getenv("DB_PATH")
+
+	// 2. Fallback to a local path if the environment variable isn't set
+	if dbPath == "" {
+		dbPath = "./quests.db"
+	}
+
+	// 3. Use the dynamic path instead of a hardcoded string
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("database: failed to open connection: %w", err)
 	}
 
-	// Verify the health of the database connection before proceeding.
+	// 4. Verify the health of the database connection before proceeding.
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("database: connectivity check failed: %w", err)
 	}

@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
 	"github.com/robfig/cron/v3"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
@@ -67,13 +72,51 @@ func main() {
 
 	log.Println("Initialization: Service routes registered successfully.")
 
-	// --- PHASE 4: Service Execution ---
+	// --- PHASE 4: Service Execution (Non-Blocking) ---
 	// Start the HTTP server on the designated internal port.
 	// In production, this service is typically proxied via Nginx or managed by systemd.
 	addr := ":8081"
-	log.Printf("Service Status: Launching Quest Log at http://localhost%s", addr)
-
-	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatalf("CRITICAL: Server failed to start: %v", err)
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: mux,
 	}
+
+	// Launch the server in a background goroutine
+	go func() {
+		log.Printf("Service Status: Launching Quest Log at http://localhost%s", addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("CRITICAL: Server failed: %v", err)
+		}
+	}()
+
+	// --- PHASE 5: Graceful Shutdown Orchestration ---
+	// Create a channel to listen for interrupt signals (Ctrl+C or Docker stop)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	// Wait here until we receive a signal
+	<-stop
+	log.Println("\nShutdown Initiated: Closing Quest Log...")
+
+	// 1. Stop the cron scheduler
+	c.Stop()
+
+	// 2. Give the HTTP server 5 seconds to finish active requests
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Warning: Server forced to shutdown: %v", err)
+	}
+
+	// 3. THE CRITICAL STEP: Close the database to merge the WAL file
+	if db != nil {
+		log.Println("Database: Merging WAL and closing connection...")
+		if err := db.Close(); err != nil {
+			log.Printf("Error: Database closure failed: %v", err)
+		} else {
+			log.Println("Database: Successfully closed and persisted.")
+		}
+	}
+
+	log.Println("System Offline: All resources released.")
 }

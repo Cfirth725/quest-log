@@ -41,6 +41,6 @@ COPY --from=builder /app/quest-log .
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/static ./static
 
-RUN chmod +x /app/quest-log
+RUN chmod +rw /app
 
 CMD ["./quest-log"]
