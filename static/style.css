@@ -24,6 +24,10 @@
     --radius-sm: 4px;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 
 /* --- 2. BASE ARCHITECTURE --- */
 body { 
@@ -48,10 +52,20 @@ main {
 }
 
 /* --- 3. NAVIGATION & FOOTER --- */
-nav { 
-    background: white; 
-    border-bottom: 2px solid var(--border-color); 
-    padding: 1rem; 
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center; 
+    padding: 1rem;
+}
+
+nav a {
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    font-size: 0.9rem;
 }
 
 .nav-flex { 
@@ -79,7 +93,7 @@ footer {
 .pasture-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
     margin-bottom: 2rem;
 }
 
@@ -309,3 +323,52 @@ input, select, textarea {
 .inline-form { display: flex; gap: 10px; align-items: center; }
 .color-picker { width: 60px !important; padding: 2px !important; height: 42px; }
 .small-btn { width: auto !important; padding: 0.5rem 1.5rem !important; }
+
+/* --- 10. MOBILE RESPONSIVENESS & POLISH --- */
+@media (max-width: 600px) {
+    nav, .nav-flex, .nav-links {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        width: 100%;
+        padding: 0.5rem 0.5rem; 
+        box-sizing: border-box;
+    }
+
+    nav a, .nav-links a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 0.5rem 2px; 
+        margin: 0 !important;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;      
+        font-weight: bold;
+        text-decoration: none;
+        color: var(--primary-green);
+        min-height: 38px;
+        word-break: break-word; 
+    }
+
+    main {
+        padding-top: 0.5rem !important;
+    }
+
+    .pasture-header {
+        flex-direction: column;
+        gap: 1.5rem;
+        margin: 1rem 0 2.5rem 0;
+        text-align: center;
+    }
+
+    /* Make the Bad Brain button very distinct and easy to tap */
+    .bad-brain-btn {
+        width: 100%;
+        padding: 1.2rem;
+        font-size: 1.2rem;
+        display: block;
+        box-shadow: 0 4px 6px rgba(220, 38, 38, 0.1);
+    }
+}
