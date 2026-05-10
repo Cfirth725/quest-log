@@ -112,7 +112,7 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 	// This timestamp is critical for the Master Spawner's interval logic.
 	_, err = tx.ExecContext(ctx, `
 		UPDATE quests 
-		SET status = 'Completed', last_completed_at = CURRENT_TIMESTAMP 
+		SET status = 'Completed', last_completed_at = DATETIME('now', 'localtime') 
 		WHERE id = ?`, questID)
 	if err != nil {
 		return fmt.Errorf("repository: quest status update failed: %w", err)
@@ -130,7 +130,7 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 	_, err = tx.ExecContext(ctx, `
 		UPDATE users 
 		SET dopamine_streak = dopamine_streak + 1 
-		WHERE id = ?`, earnedXP, completingUserID)
+		WHERE id = ?`, completingUserID)
 	if err != nil {
 		return fmt.Errorf("repository: user reward application failed: %w", err)
 	}
@@ -174,7 +174,7 @@ func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (CorralSummar
         COALESCE(SUM(xp_awarded), 0) 
     FROM quest_completions 
     WHERE completed_by_user_id = ? 
-    AND datetime(completed_at) >= datetime('now', '-7 days')`, userID).Scan(&summary.QuestCount, &summary.TotalXP)
+    AND datetime(completed_at) >= datetime('now', '-7 days', 'localtime')`, userID).Scan(&summary.QuestCount, &summary.TotalXP)
 
 	if err != nil {
 		return summary, fmt.Errorf("repository: summary aggregation failed: %w", err)
@@ -187,7 +187,7 @@ func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (CorralSummar
     	JOIN quests q ON qc.quest_id = q.id
     	JOIN categories c ON q.category_id = c.id
     	WHERE qc.completed_by_user_id = ?
-    	AND datetime(qc.completed_at) >= datetime('now', '-7 days')
+    	AND datetime(qc.completed_at) >= datetime('now', '-7 days', 'localtime')
     	ORDER BY qc.completed_at DESC`, userID)
 
 	if err != nil {
@@ -209,7 +209,7 @@ func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (CorralSummar
 
 // SoftDeleteQuest marks a specific quest as archived by setting a timestamp.
 func SoftDeleteQuest(ctx context.Context, db *sql.DB, id int) error {
-	query := `UPDATE quests SET deleted_at = datetime('now') WHERE id = ?`
+	query := `UPDATE quests SET deleted_at = datetime('now', 'localtime') WHERE id = ?`
 
 	_, err := db.ExecContext(ctx, query, id)
 	if err != nil {

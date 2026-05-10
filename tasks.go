@@ -42,8 +42,8 @@ func processDailies(db *sql.DB) (int, error) {
 		  AND status != 'active'
 		  AND id NOT IN (
 			  SELECT quest_id FROM quest_completions 
-			  WHERE completed_at > datetime('now', 'start of day', '+4 hours')
-		  );`
+			  WHERE completed_at > datetime('now', 'start of day', 'localtime', '+4 hours')
+      	);`
 
 	result, err := db.Exec(query)
 	if err != nil {
@@ -64,7 +64,7 @@ func processIntervals(db *sql.DB) (int, error) {
 		SET status = 'active' 
 		WHERE quest_type = 'Repeating' 
 		  AND status != 'active'
-		  AND (julianday('now') - julianday(last_completed_at)) >= repeat_interval_days;`
+		  AND (julianday('now', 'localtime') - julianday(last_completed_at)) >= repeat_interval_days;`
 
 	result, err := db.Exec(query)
 	if err != nil {

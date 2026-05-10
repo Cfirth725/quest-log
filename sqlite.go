@@ -29,8 +29,14 @@ func Connect() (*sql.DB, error) {
 		dbPath = "./quests.db"
 	}
 
+	// Build a robust DSN string:
+	// _loc=Local: Matches DB time to the Raspberry Pi's system clock.
+	// parseTime=true: Automatically converts SQL timestamps to Go time.Time objects.
+	// _foreign_keys=on: Ensures relational integrity for your user/quest links.
+	dsn := fmt.Sprintf("%s?_loc=Local&parseTime=true&_foreign_keys=on", dbPath)
+
 	// 3. Use the dynamic path instead of a hardcoded string
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("database: failed to open connection: %w", err)
 	}
