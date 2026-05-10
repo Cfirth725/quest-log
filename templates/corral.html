@@ -19,7 +19,7 @@
                 <h3 class="quest-title">{{ .Title }}</h3>
                 <div class="quest-meta">
                     <span style="color: var(--dynamic-cat-color); font-weight: bold;">{{ .CategoryName }}</span> 
-                    &bull; {{ .CompletedAt }}
+                    &bull; {{ .CompletedAt.Format "Mon, Jan 02 at 3:04 PM" }}
                 </div>
             </div>
         </div>

@@ -62,7 +62,7 @@ type QuestCompletionRow struct {
 	CategoryName string
 	ColorHex     string
 	XPAwarded    int
-	CompletedAt  string
+	CompletedAt  time.Time
 }
 
 // Quest is the fundamental domain model for a task within the system.

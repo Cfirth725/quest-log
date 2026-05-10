@@ -29,7 +29,12 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y \
     libsqlite3-0 \
     wget \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
+
+# Force the system to use the local timezone
+ENV TZ=America/New_York
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 WORKDIR /app
 COPY --from=builder /app/quest-log .

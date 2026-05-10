@@ -209,7 +209,7 @@ func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (CorralSummar
 
 // SoftDeleteQuest marks a specific quest as archived by setting a timestamp.
 func SoftDeleteQuest(ctx context.Context, db *sql.DB, id int) error {
-	query := `UPDATE quests SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?`
+	query := `UPDATE quests SET deleted_at = datetime('now') WHERE id = ?`
 
 	_, err := db.ExecContext(ctx, query, id)
 	if err != nil {
