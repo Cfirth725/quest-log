@@ -1,0 +1,13 @@
+# Secrets & Config
+.env
+
+# Data & Databases
+*.db
+*.db-shm
+*.db-wal
+*.csv
+*.txt
+
+# Metadata & History
+.git
+.DS_Store

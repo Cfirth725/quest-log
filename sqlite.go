@@ -26,7 +26,7 @@ func Connect() (*sql.DB, error) {
 
 	// 2. Fallback to a local path if the environment variable isn't set
 	if dbPath == "" {
-		dbPath = "./quests.db"
+		dbPath = "./data/quests.db"
 	}
 
 	// Build a robust DSN string:
