@@ -19,14 +19,12 @@ Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replac
 - **State-Machine Management:** Integrated "Pivot" logic allowing users to downgrade repeating tasks to **One-Time** quests dynamically, adapting to fluctuating cognitive energy levels.
 
 ### Infrastructure & Deployment
-
 - The Quest Log is designed to run as a resilient "Always-On" service on the **Milford Node** (Raspberry Pi 3B).
 - **Container Orchestration:** Managed via Docker Compose with directory-level volume persistence to ensure SQLite journal files (`-wal` and `-shm`) survive container lifecycles.
 - **Precision Timekeeping:** Uses `_loc=Local` and `parseTime=true` DSN parameters to align the Go application layer with the physical hardware clock, ensuring accurate "Weekly Win" telemetry.
 - **Multi-Stage Builds:** A optimized Debian-based Dockerfile that balances a heavy GCC build environment (for CGO/SQLite) with a slim production runtime.
 
 ## Tech Stack
-
 - **Language:** Go (Golang) 1.2x
 - **Scheduling:** `robfig/cron/v3`
 - **Database:** SQLite3 (WAL Mode, Relational Schema with `CHECK` constraints)
@@ -59,17 +57,31 @@ Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replac
 - [x] **Master Spawner Logic:** Implemented Cron-based resets for `Daily` and `Repeating` quests.
 - [x] **Design System Refactor:** Migrated to a centralized, token-based CSS architecture for better maintainability.
 
-#### **Phase 4: Momentum & Telemetry (IN PROGRESS)**
+#### **Phase 4: Resiliency & Telemetry (COMPLETE)**
 - [x] **The "Bad Brain Day" Momentum Filter:** UI-triggered backend toggle to restrict views to `is_non_negotiable` tasks.
 - [x] **Soft-Delete Safety Net:** Implemented non-destructive deletion via `deleted_at` timestamps.
 - [x] **Resilient Data Plumbing:** - Implemented **Graceful Shutdown** orchestration to handle `SIGINT`/`SIGTERM`, ensuring `db.Close()` merges SQLite WAL files before container exit.
-	- [x] Synchronized the **Milford Node** clock to local time, anchoring automated resets (Dailies) to a 4:00 AM local window rather than UTC midnight.
-- [ ] **The Gear Check Lock:** Pre-flight validation step where quests remain locked until `gear_checks` are toggled.
-- [ ] **Atmospheric Trigger:** Integrating with the `Barometric Pressure Warning` daemon to suggest "Low-Energy Mode" during weather shifts.
+    - Synchronized the **Milford Node** clock to local time, anchoring automated resets (Dailies) to a 4:00 AM local window rather than UTC midnight.
 
-#### **Phase 5: The Ingestion Bridge**
+#### **Phase 5: Storage Optimization & Maintenance (IN PROGRESS)**
+- [ ] **Engine Hygiene:** Implementing automated `db.Exec("VACUUM")` database compaction routines to claim unallocated disk sectors after data purging.
+- [ ] **Data Pruning Ledger:** Designing a background utility to safely purge historical logs from `quest_completions` older than a defined retention window (e.g., 30 days) to permanently limit SQLite file bloat.
+- [ ] **Automated Disaster Recovery:** Scripting a lightweight cron routine to create timestamped, compressed backups (`tar.gz`) of the SQLite database file, keeping a rolling window of copies stored safely outside the live container volume.
+
+#### **Phase 6: Analytics Ledger & Interface Sorting (PLANNED)**
+- [ ] **The Weekly Corral Summary Engine:** Build an aggregation pipeline that runs every Sunday evening to compile a weekly operational report:
+    - Compute exact execution frequency counts per task (e.g., "You completed *Daily Gym* 5 times this week!").
+    - Generate metrics breaking down completed One-Time Quests vs. Recurring/Daily Operations.
+- [ ] **Triage Layout Sorting:** Refactor the frontend query engine to sort active Dailies dynamically by **Category Grouping** instead of default database creation time, keeping similar contexts clustered together visually.
+
+#### **Phase 7: The Ingestion Bridge**
 - [ ] **Automated Seeding:** Building a JSON bulk-importer for rapid task generation.
 - [ ] **API Exposure:** Finalizing the headless endpoint for Obsidian Dataview visualization.
 
-#### **Phase 6: Multi-User Plan**
+#### **Phase 7: Multi-User Architecture & Personalization**
 - [ ] **Auth Layer:** Implementing secure session management and user-specific pasture views.
+- [ ] **Interface Themes:** Integrating native token-based Dark Mode configuration flags.
+
+#### **Phase 8: Advanced Environmental Integrations**
+- [ ] **The Gear Check Lock:** Pre-flight validation step where quests remain locked until `gear_checks` are toggled.
+- [ ] **Atmospheric Trigger:** Integrating with the local `Barometric Guard` daemon to suggest "Low-Energy Mode" during intense pressure drops.
