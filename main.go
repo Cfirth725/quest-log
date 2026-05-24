@@ -24,6 +24,10 @@ func main() {
 	DB = db
 	log.Println("Initialization: Database connection established.")
 
+	// STORAGE SWEEP: Fire database compaction asynchronously on boot.
+	// This cleans up unallocated space before heavy daily operations begin.
+	go OptimizeDatabase(db)
+
 	// --- PHASE 2: Background Task Orchestration ---
 	// Initialize the cron scheduler to manage automated quest lifecycles.
 	c := cron.New()

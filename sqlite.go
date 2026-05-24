@@ -5,7 +5,9 @@ import (
 	_ "embed"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
+	"log"
 	"os"
+	"time"
 )
 
 // DB serves as the primary connection pool for the application.
@@ -152,4 +154,68 @@ func createTables(db *sql.DB) error {
 		return fmt.Errorf("database: failed to execute embedded schema: %w", err)
 	}
 	return nil
+}
+
+// OptimizeDatabase captures the physical file metrics of the SQLite database layer,
+// executes an atomic VACUUM compaction sweep, and logs bytes recovered from host storage.
+func OptimizeDatabase(db *sql.DB) {
+	log.Println("Storage Maintenance: Commencing system optimization sweep...")
+
+	// Extract the database target from the environment configuration
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		// Strict fallback alignment to prevent path runtime exceptions
+		dbPath = "data/quest_log.db"
+	}
+
+	// 1. Telemetry Phase: Capture file allocations prior to optimization
+	preInfo, err := os.Stat(dbPath)
+	var preBytes int64
+	if err == nil {
+		preBytes = preInfo.Size()
+		log.Printf("Storage Telemetry: Pre-compaction database allocation: %d bytes", preBytes)
+	} else {
+		log.Printf("Storage Telemetry Warning: Unable to read pre-compaction file state: %v", err)
+	}
+
+	start := time.Now()
+
+	// Check the number of completely unallocated empty pages in the file
+	var freePages int
+	err = db.QueryRow("PRAGMA freelist_count;").Scan(&freePages)
+	if err != nil {
+		log.Printf("Storage Telemetry Warning: Unable to read freelist count: %v", err)
+	}
+
+	// Only trigger the heavy VACUUM if the database is holding onto bloated space
+	if freePages > 100 {
+		log.Printf("Storage Maintenance: Free pages threshold exceeded (%d pages). Executing cleanup...", freePages)
+
+		// 2. Execution Phase: Rebuild database pages sequentially
+		_, err = db.Exec("VACUUM;")
+		if err != nil {
+			log.Printf("CRITICAL: Storage optimization abort encountered: %v", err)
+			return
+		}
+	} else {
+		log.Printf("Storage Maintenance: Database structure optimized. Skipping sweep (Free pages: %d)", freePages)
+		duration := time.Since(start)
+		log.Printf("Storage Maintenance: Optimization check completed in %v (0 bytes recovered)", duration)
+		return // CRITICAL: Exit early here since no physical file changes happened!
+	}
+
+	duration := time.Since(start)
+
+	// 3. Verification Phase: Analyze recovered sectors and log optimization efficiency
+	postInfo, err := os.Stat(dbPath)
+	if err != nil {
+		log.Printf("Storage Telemetry: Unable to verify post-compaction storage state: %v", err)
+		return
+	}
+
+	postBytes := postInfo.Size()
+	bytesSaved := preBytes - postBytes
+
+	log.Printf("Storage Maintenance: Compaction cycle completed successfully in %v", duration)
+	log.Printf("Storage Telemetry: Post-compaction database allocation: %d bytes (Recovered: %d bytes)", postBytes, bytesSaved)
 }

@@ -64,7 +64,7 @@ Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replac
     - Synchronized the **Milford Node** clock to local time, anchoring automated resets (Dailies) to a 4:00 AM local window rather than UTC midnight.
 
 #### **Phase 5: Storage Optimization & Maintenance (IN PROGRESS)**
-- [ ] **Engine Hygiene:** Implementing automated `db.Exec("VACUUM")` database compaction routines to claim unallocated disk sectors after data purging.
+- [x] **Engine Hygiene:** Implementing automated `db.Exec("VACUUM")` database compaction routines to claim unallocated disk sectors after data purging.
 - [ ] **Data Pruning Ledger:** Designing a background utility to safely purge historical logs from `quest_completions` older than a defined retention window (e.g., 30 days) to permanently limit SQLite file bloat.
 - [ ] **Automated Disaster Recovery:** Scripting a lightweight cron routine to create timestamped, compressed backups (`tar.gz`) of the SQLite database file, keeping a rolling window of copies stored safely outside the live container volume.
 
