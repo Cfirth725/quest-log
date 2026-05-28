@@ -60,13 +60,13 @@ Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replac
 #### **Phase 4: Resiliency & Telemetry (COMPLETE)**
 - [x] **The "Bad Brain Day" Momentum Filter:** UI-triggered backend toggle to restrict views to `is_non_negotiable` tasks.
 - [x] **Soft-Delete Safety Net:** Implemented non-destructive deletion via `deleted_at` timestamps.
-- [x] **Resilient Data Plumbing:** - Implemented **Graceful Shutdown** orchestration to handle `SIGINT`/`SIGTERM`, ensuring `db.Close()` merges SQLite WAL files before container exit.
+- [x] **Resilient Data Plumbing:** Implemented **Graceful Shutdown** orchestration to handle `SIGINT`/`SIGTERM`, ensuring `db.Close()` merges SQLite WAL files before container exit.
     - Synchronized the **Milford Node** clock to local time, anchoring automated resets (Dailies) to a 4:00 AM local window rather than UTC midnight.
 
-#### **Phase 5: Storage Optimization & Maintenance (IN PROGRESS)**
+#### **Phase 5: Storage Optimization & Maintenance (COMPLETE)**
 - [x] **Engine Hygiene:** Implementing automated `db.Exec("VACUUM")` database compaction routines to claim unallocated disk sectors after data purging.
-- [ ] **Data Pruning Ledger:** Designing a background utility to safely purge historical logs from `quest_completions` older than a defined retention window (e.g., 30 days) to permanently limit SQLite file bloat.
-- [ ] **Automated Disaster Recovery:** Scripting a lightweight cron routine to create timestamped, compressed backups (`tar.gz`) of the SQLite database file, keeping a rolling window of copies stored safely outside the live container volume.
+- [x] **Data Pruning Ledger:** Designing a background utility to safely purge historical logs from `quest_completions` older than a defined retention window (e.g., 14 days) to permanently limit SQLite file bloat.
+- [x] **Automated Disaster Recovery:** Scripting a lightweight cron routine to create timestamped, compressed backups (`tar.gz`) of the SQLite database file, keeping a rolling window of copies stored safely outside the live container volume.
 
 #### **Phase 6: Analytics Ledger & Interface Sorting (PLANNED)**
 - [ ] **The Weekly Corral Summary Engine:** Build an aggregation pipeline that runs every Sunday evening to compile a weekly operational report:
@@ -78,10 +78,10 @@ Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replac
 - [ ] **Automated Seeding:** Building a JSON bulk-importer for rapid task generation.
 - [ ] **API Exposure:** Finalizing the headless endpoint for Obsidian Dataview visualization.
 
-#### **Phase 7: Multi-User Architecture & Personalization**
+#### **Phase 8: Multi-User Architecture & Personalization**
 - [ ] **Auth Layer:** Implementing secure session management and user-specific pasture views.
 - [ ] **Interface Themes:** Integrating native token-based Dark Mode configuration flags.
 
-#### **Phase 8: Advanced Environmental Integrations**
+#### **Phase 9: Advanced Environmental Integrations**
 - [ ] **The Gear Check Lock:** Pre-flight validation step where quests remain locked until `gear_checks` are toggled.
 - [ ] **Atmospheric Trigger:** Integrating with the local `Barometric Guard` daemon to suggest "Low-Energy Mode" during intense pressure drops.
