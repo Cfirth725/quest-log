@@ -160,7 +160,22 @@ func createTables(db *sql.DB) error {
 // executes an atomic VACUUM compaction sweep, and logs bytes recovered from host storage.
 func OptimizeDatabase(db *sql.DB) {
 	log.Println("Storage Maintenance: Commencing system optimization sweep...")
+	// ----- PHASE 0: Data Pruning Ledger -----
+	// Calculate the strict 14-day retention cutoff
+	cutoff := time.Now().AddDate(0, 0, -14).Format("2006-01-02 15:04:05")
 
+	pruneQuery := `DELETE FROM quest_completions WHERE completed_at < ?;`
+	result, err := db.Exec(pruneQuery, cutoff)
+	if err != nil {
+		log.Printf("Storage Maintenance Warning: Data pruning ledger execution failed: %v", err)
+	} else {
+		rowsAffected, _ := result.RowsAffected()
+		if rowsAffected > 0 {
+			log.Printf("[Pruning Ledger] Successfully purged %d expired quest completions.", rowsAffected)
+		}
+	}
+
+	// ----- PHASE 1: Telemetry Phase -----
 	// Extract the database target from the environment configuration
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
@@ -168,7 +183,7 @@ func OptimizeDatabase(db *sql.DB) {
 		dbPath = "data/quest_log.db"
 	}
 
-	// 1. Telemetry Phase: Capture file allocations prior to optimization
+	// Capture file allocations prior to optimization
 	preInfo, err := os.Stat(dbPath)
 	var preBytes int64
 	if err == nil {
@@ -191,7 +206,8 @@ func OptimizeDatabase(db *sql.DB) {
 	if freePages > 100 {
 		log.Printf("Storage Maintenance: Free pages threshold exceeded (%d pages). Executing cleanup...", freePages)
 
-		// 2. Execution Phase: Rebuild database pages sequentially
+		// ----- PHASE 2: Execution Phase -----
+		// Rebuild database pages sequentially
 		_, err = db.Exec("VACUUM;")
 		if err != nil {
 			log.Printf("CRITICAL: Storage optimization abort encountered: %v", err)
@@ -201,12 +217,13 @@ func OptimizeDatabase(db *sql.DB) {
 		log.Printf("Storage Maintenance: Database structure optimized. Skipping sweep (Free pages: %d)", freePages)
 		duration := time.Since(start)
 		log.Printf("Storage Maintenance: Optimization check completed in %v (0 bytes recovered)", duration)
-		return // CRITICAL: Exit early here since no physical file changes happened!
+		return
 	}
 
 	duration := time.Since(start)
 
-	// 3. Verification Phase: Analyze recovered sectors and log optimization efficiency
+	// ----- PHASE 3: Verification Phase -----
+	// Analyze recovered sectors and log optimization efficiency
 	postInfo, err := os.Stat(dbPath)
 	if err != nil {
 		log.Printf("Storage Telemetry: Unable to verify post-compaction storage state: %v", err)
