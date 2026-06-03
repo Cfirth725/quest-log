@@ -5,13 +5,11 @@ import (
 	"log"
 )
 
-// RunMasterSpawner orchestrates the automated reactivation of tasks.
-// It serves as the central execution point for both daily resets and
-// interval-based recurring tasks, logging telemetry for each cycle.
+// RunMasterSpawner runs daily at 4:03 AM to check which quests need to be reactivated.
 func RunMasterSpawner(db *sql.DB) {
 	log.Println("--- Starting Master Spawner Cycle ---")
 
-	// Trigger the 4:03 AM hard-reset logic for Daily tasks.
+	// 1. Daily tasks check
 	dailies, err := processDailies(db)
 	if err != nil {
 		log.Printf("ERROR in Dailies: %v", err)
@@ -19,7 +17,7 @@ func RunMasterSpawner(db *sql.DB) {
 		log.Printf("SUCCESS: Spawned %d Daily quests.", dailies)
 	}
 
-	// Trigger the elapsed-time check for Repeating tasks.
+	// 2. Repeating tasks check
 	intervals, err := processIntervals(db)
 	if err != nil {
 		log.Printf("ERROR in Intervals: %v", err)
@@ -33,8 +31,9 @@ func RunMasterSpawner(db *sql.DB) {
 // within the current daily boundary (resetting at 04:00 local time).
 // It uses an atomic subquery to prevent redundant activations.
 func processDailies(db *sql.DB) (int, error) {
-	// The +4 hours offset ensures the 'Daily' window aligns with the
-	// early morning reset rather than UTC midnight.
+	// The NOT IN subquery protects against a midnight race condition.
+	// By subtracting 4 hours first, anything completed between midnight and 3:59 AM
+	// is correctly grouped with the previous calendar day's window.
 	query := `
 		UPDATE quests 
 		SET status = 'active' 
@@ -42,7 +41,7 @@ func processDailies(db *sql.DB) (int, error) {
 		  AND status != 'active'
 		  AND id NOT IN (
 			  SELECT quest_id FROM quest_completions 
-			  WHERE completed_at > datetime('now', 'start of day', 'localtime', '+4 hours')
+			  WHERE completed_at > datetime('now', '-4 hours', 'start of day', '+4 hours', 'localtime')
       	);`
 
 	result, err := db.Exec(query)
@@ -57,14 +56,21 @@ func processDailies(db *sql.DB) (int, error) {
 // recurrence windows. It calculates the delta between the current time
 // and the last completion record using Julian Day conversion.
 func processIntervals(db *sql.DB) (int, error) {
-	// julianday() provides a high-precision decimal count of days,
-	// allowing for accurate comparison against the repeat_interval_days column.
+	// 1. Shifting backward by 4 hours standardizes both timestamps.
+	// 2. 'start of day' strips off the hours/minutes/seconds so we can compare raw dates.
+	// 3. CAST(... AS INTEGER) truncates fractional decimals to prevent timezone or daylight saving drift.
 	query := `
 		UPDATE quests 
 		SET status = 'active' 
 		WHERE quest_type = 'Repeating' 
 		  AND status != 'active'
-		  AND (julianday('now', 'localtime') - julianday(last_completed_at)) >= repeat_interval_days;`
+		  AND last_completed_at IS NOT NULL
+		  AND (
+			CAST(
+				julianday('now', '-4 hours', 'start of day') - 
+				julianday(last_completed_at, '-4 hours', 'start of day') 
+			AS INTEGER)
+		  ) >= repeat_interval_days;`
 
 	result, err := db.Exec(query)
 	if err != nil {
