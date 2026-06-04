@@ -45,6 +45,7 @@
                 <option value="One-Time" selected>One-Time Bounty</option>
                 <option value="Daily">Daily Task</option>
                 <option value="Repeating">Recurring Quest</option>
+                <option value="Weekly">Weekly Quest</option>
             </select>
         </div>
 
@@ -54,15 +55,35 @@
             <small>Quest will respawn X days after it is marked completed.</small>
         </div>
 
+        <div class="form-group" id="weekly_reset_group" style="display: none; border-left: 3px solid var(--primary-green); padding-left: 15px;">
+            <label for="reset_day_of_week">Weekly Reset Day</label>
+            <select id="reset_day_of_week" name="reset_day_of_week">
+                <option value="0" selected>Sunday (Default Shared Reset)</option>
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
+            </select>
+            <small>The quest will automatically reactivate at 04:03 AM on the selected morning.</small>
+        </div>
+
         <script>
             function toggleInterval() {
                 const type = document.getElementById('quest_type').value;
                 const intervalGroup = document.getElementById('interval_group');
                 const intervalInput = document.getElementById('repeat_interval_days');
+                const weeklyGroup = document.getElementById('weekly_reset_group');
                 
                 if (type === 'Repeating') {
                     intervalGroup.style.display = 'block';
                     intervalInput.required = true;
+                } else if (type === 'Weekly') {
+                    intervalGroup.style.display = 'none';
+                    intervalInput.required = false;
+                    intervalInput.value = '';
+                    weeklyGroup.style.display = 'block';
                 } else {
                     intervalGroup.style.display = 'none';
                     intervalInput.required = false;

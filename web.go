@@ -101,6 +101,7 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	ownerIDStr := r.FormValue("owner_id")
 	questType := r.FormValue("quest_type")
 	intervalStr := r.FormValue("repeat_interval_days")
+	resetDayStr := r.FormValue("reset_day_of_week")
 
 	// Validate Ownership: Ensures assignments remain within authorized system ranges.
 	ownerID, err := strconv.Atoi(ownerIDStr)
@@ -152,7 +153,7 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Lifecycle Validation: Ensure the quest type adheres to the database schema.
-	validTypes := map[string]bool{"One-Time": true, "Daily": true, "Repeating": true}
+	validTypes := map[string]bool{"One-Time": true, "Daily": true, "Repeating": true, "Weekly": true}
 	if !validTypes[questType] {
 		log.Printf("Security Alert: Invalid quest_type: %s", questType)
 		http.Error(w, "Invalid quest type.", http.StatusBadRequest)
@@ -170,11 +171,20 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Persistent Injection: Commit the quest to the system of record.
-	query := `INSERT INTO quests (title, category_id, difficulty, base_xp, is_non_negotiable, status, owner_id, quest_type, repeat_interval_days)
-        VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?)`
+	// Weekly Configuration: Parse target reset day (Defaulting to 0 = Sunday if missing/malformed)
+	resetDayOfWeek := 0
+	if questType == "Weekly" && resetDayStr != "" {
+		val, err := strconv.Atoi(resetDayStr)
+		if err == nil && val >= 0 && val <= 6 {
+			resetDayOfWeek = val
+		}
+	}
 
-	_, err = DB.Exec(query, cleanTitle, categoryID, difficulty, calculatedXP, isNonNegotiable, ownerID, questType, interval)
+	// Persistent Injection: Commit the quest to the system of record.
+	query := `INSERT INTO quests (title, category_id, difficulty, base_xp, is_non_negotiable, status, owner_id, quest_type, repeat_interval_days, reset_day_of_week)
+        VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)`
+
+	_, err = DB.Exec(query, cleanTitle, categoryID, difficulty, calculatedXP, isNonNegotiable, ownerID, questType, interval, resetDayOfWeek)
 	if err != nil {
 		log.Printf("Database Error: Failed to insert new quest: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

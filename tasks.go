@@ -24,6 +24,15 @@ func RunMasterSpawner(db *sql.DB) {
 	} else {
 		log.Printf("SUCCESS: Spawned %d Interval quests.", intervals)
 	}
+
+	// 3. Weekly tasks check
+	weeklies, err := processWeeklies(db)
+	if err != nil {
+		log.Printf("ERROR in Weeklies: %v", err)
+	} else {
+		log.Printf("SUCCESS: Spawned %d Weekly quests.", weeklies)
+	}
+
 	log.Println("--- Master Spawner Cycle Complete ---")
 }
 
@@ -71,6 +80,32 @@ func processIntervals(db *sql.DB) (int, error) {
 				julianday(last_completed_at, '-4 hours', 'start of day') 
 			AS INTEGER)
 		  ) >= repeat_interval_days;`
+
+	result, err := db.Exec(query)
+	if err != nil {
+		return 0, err
+	}
+	rows, _ := result.RowsAffected()
+	return int(rows), nil
+}
+
+// processWeeklies handles tasks that reset once a week (e.g., weekly chores).
+// It checks if the task has been completed during the current calendar week.
+func processWeeklies(db *sql.DB) (int, error) {
+	// 1. '%Y-%W' calculates the Year and Week Number (e.g., '2026-22').
+	// 2. We shift 'now' and 'completed_at' back by 4 hours to respect the 4 AM game-day line.
+	// 3. If the current week string doesn't match the last completed week string, it resets.
+	query := `
+		UPDATE quests 
+		SET status = 'active' 
+		WHERE quest_type = 'Weekly' 
+		  AND status != 'active'
+		  -- Check if today matches the target reset day (1 = Monday)
+		  AND CAST(strftime('%w', 'now', '-4 hours') AS INTEGER) = reset_day_of_week
+		  AND id NOT IN (
+			  SELECT quest_id FROM quest_completions 
+			  WHERE strftime('%Y-%W', completed_at, '-4 hours') = strftime('%Y-%W', 'now', '-4 hours')
+		  );`
 
 	result, err := db.Exec(query)
 	if err != nil {
