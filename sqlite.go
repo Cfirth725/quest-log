@@ -180,7 +180,7 @@ func OptimizeDatabase(db *sql.DB) {
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
 		// Strict fallback alignment to prevent path runtime exceptions
-		dbPath = "data/quest_log.db"
+		dbPath = "data/quests.db"
 	}
 
 	// Capture file allocations prior to optimization

@@ -33,10 +33,10 @@ fi
 # ==============================================================================
 # Configuration Enforcement (Fail-Closed Security)
 # ==============================================================================
-# If DB_PATH or BACKUP_DIR aren't provided by .env or the OS, abort immediately.
+# If HOST_DB_PATH or BACKUP_DIR aren't provided by .env or the OS, abort immediately.
 # This prevents the script from creating folders or reading files in unintended directories.
-if [ -z "$DB_PATH" ] || [ -z "$BACKUP_DIR" ]; then
-    echo "CRITICAL ERROR: Environment variables 'DB_PATH' or 'BACKUP_DIR' are missing." >&2
+if [ -z "$HOST_DB_PATH" ] || [ -z "$BACKUP_DIR" ]; then
+    echo "CRITICAL ERROR: Environment variables 'HOST_DB_PATH' or 'BACKUP_DIR' are missing." >&2
     echo "Asset protection abort triggered. Backup cancelled." >&2
     exit 1
 fi
@@ -53,7 +53,7 @@ mkdir -p "$BACKUP_DIR"
 # Phase 1: Safe SQLite Snapshot
 # ==============================================================================
 echo "Storage Maintenance: Creating safe SQLite snapshot..."
-sqlite3 "$DB_PATH" ".backup '$TEMP_SNAPSHOT'"
+sqlite3 "$HOST_DB_PATH" ".backup '$TEMP_SNAPSHOT'"
 
 if [ $? -ne 0 ]; then
     echo "CRITICAL ERROR: Failed to create SQLite live snapshot." >&2
@@ -67,7 +67,7 @@ echo "Storage Telemetry: Compacting snapshot into archive..."
 tar -czf "$BACKUP_DIR/$BACKUP_NAME" -C "$BACKUP_DIR" temp_quests.db
 
 if [ $? -eq 0 ]; then
-    PRE_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || stat -f%z "$DB_PATH")
+    PRE_SIZE=$(stat -c%s "$HOST_DB_PATH" 2>/dev/null || stat -f%z "$HOST_DB_PATH")
     POST_SIZE=$(stat -c%s "$BACKUP_DIR/$BACKUP_NAME" 2>/dev/null || stat -f%z "$BACKUP_DIR/$BACKUP_NAME")
     
     echo "Storage Maintenance: Backup archived successfully: $BACKUP_NAME"
