@@ -13,7 +13,7 @@ Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replac
     - **Ghost Guard:** Server-side validation and atomic `sql.Transaction` logic to prevent partial writes and ensure data sanitization.
     - **Hard-Coded Economy:** A "Number Compressed" XP system ($1, 5, 10$) to prevent reward-inflation and maintain consistent effort-tracking.
     - **Priority Shield:** A high-visibility triage layer that floats "Non-Negotiable" quests to the top of the stack.
-- **Automated Quest Lifecycle:** A background **Master Spawner** (via `robfig/cron`) that orchestrates Daily resets and Interval-based recurrence using Julian Day delta calculations.
+- **Automated Quest Lifecycle:** An intelligent background **Master Spawner** that automates the friction of tracking recurring tasks. It handles daily resets, complex intervals, and weekly cycles automatically, ensuring your operational dashboard mirrors your real-world routines.
 - **The Weekly Corral:** A dedicated historical ledger (`quest_completions`) that decouples task state from accomplishment tracking. It provides a visual "Pile of Wins" that persists even after the "Pasture" is cleared.
 - **Idempotent Infrastructure:** A single-binary deployment model using `go:embed` to bake the SQL schema directly into the application, ensuring a portable and consistent environment.
 - **State-Machine Management:** Integrated "Pivot" logic allowing users to downgrade repeating tasks to **One-Time** quests dynamically, adapting to fluctuating cognitive energy levels.
@@ -54,7 +54,7 @@ Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replac
 
 #### **Phase 3: Executive Function Hardening (COMPLETE)**
 - [x] **Modular Architecture:** Refactored codebase into a professional multi-file structure.
-- [x] **Master Spawner Logic:** Implemented Cron-based resets for `Daily` and `Repeating` quests.
+- [x] **Master Spawner Logic:** Implemented Cron-based resets for `Daily`, `Repeating`, and day-of-week `Weekly` quests.
 - [x] **Design System Refactor:** Migrated to a centralized, token-based CSS architecture for better maintainability.
 
 #### **Phase 4: Resiliency & Telemetry (COMPLETE)**
