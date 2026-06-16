@@ -16,24 +16,26 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int, momentumMode b
 		momentumFilter = "AND q.is_non_negotiable = 1"
 	}
 
-	// 2. Inject the filter into the SQL string
+	// 2. Inject the category-first sorting rules into the SQL query template
 	query := fmt.Sprintf(`
-    SELECT 
-        q.id, q.title, q.difficulty, q.base_xp, q.quest_type, q.is_non_negotiable, q.status, q.created_at,
-        c.name, c.color_hex
-    FROM quests q
-    LEFT JOIN categories c ON q.category_id = c.id
-    WHERE (q.owner_id = ? OR q.owner_id = 0)
-	AND q.deleted_at IS NULL
-    %s 
-    AND (
-        q.status = 'active' 
-        OR (q.status = 'Completed' AND q.quest_type = 'One-Time')
-    )
-    ORDER BY 
-        CASE WHEN q.status = 'active' THEN 0 ELSE 1 END ASC,
-        q.is_non_negotiable DESC, 
-        q.created_at ASC
+		SELECT 
+			q.id, q.title, q.difficulty, q.base_xp, q.quest_type, q.is_non_negotiable, q.status, q.created_at,
+			COALESCE(c.name, 'Uncategorized') AS category_name, 
+			COALESCE(c.color_hex, '#4A5568') AS color_hex
+		FROM quests q
+		LEFT JOIN categories c ON q.category_id = c.id
+		WHERE (q.owner_id = ? OR q.owner_id = 0)
+		  AND q.deleted_at IS NULL
+		  %s 
+		  AND (
+			q.status = 'active' 
+			OR (q.status = 'Completed' AND q.quest_type = 'One-Time')
+		  )
+		ORDER BY 
+			CASE WHEN q.status = 'active' THEN 0 ELSE 1 END ASC,
+			category_name ASC,              -- Dynamic Category Grouping Cluster
+			q.is_non_negotiable DESC,       -- Pin non-negotiables inside that group
+			q.created_at DESC
 	`, momentumFilter)
 
 	// Using QueryContext to ensure database operations respect application lifecycle
