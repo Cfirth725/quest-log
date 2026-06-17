@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"quest-log/internal"
 	"syscall"
 	"time"
 )
@@ -15,18 +16,18 @@ func main() {
 	// --- PHASE 1: Data Layer Initialization ---
 	// Establish a persistent connection to the SQLite backend.
 	log.Println("Initializing system: Connecting to SQLite database...")
-	db, err := Connect()
+	db, err := internal.Connect()
 	if err != nil {
 		log.Fatalf("CRITICAL FAILURE: Could not establish database connection: %v", err)
 	}
 
 	// Assign the active connection to the package-level global for handler access.
-	DB = db
+	internal.DB = db
 	log.Println("Initialization: Database connection established.")
 
 	// STORAGE SWEEP: Fire database compaction asynchronously on boot.
 	// This cleans up unallocated space before heavy daily operations begin.
-	go OptimizeDatabase(db)
+	go internal.OptimizeDatabase(db)
 
 	// --- PHASE 2: Background Task Orchestration ---
 	// Initialize the cron scheduler to manage automated quest lifecycles.
@@ -35,7 +36,7 @@ func main() {
 	// Schedule the Master Spawner to run daily at 04:03 AM.
 	// This staggered timing avoids resource contention with midnight system backups.
 	_, err = c.AddFunc("3 4 * * *", func() {
-		RunMasterSpawner(db)
+		internal.RunMasterSpawner(db)
 	})
 
 	if err != nil {
@@ -48,7 +49,7 @@ func main() {
 	// COLD START EXECUTION: Immediately run the spawner on launch to ensure
 	// data consistency if the service was offline during the scheduled window
 	log.Println("Startup: Performing idempotent quest spawn check...")
-	RunMasterSpawner(db)
+	internal.RunMasterSpawner(db)
 
 	// --- PHASE 3: Route Configuration ---
 	// Initialize the multiplexer and define service endpoints.
@@ -59,20 +60,20 @@ func main() {
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	// Dashboard & Telemetry: Primary views for active tasks and historical performance.
-	mux.HandleFunc("GET /", ViewPastureHandler(db))
-	mux.HandleFunc("GET /corral", handleViewCorral)
+	mux.HandleFunc("GET /", internal.ViewPastureHandler(db))
+	mux.HandleFunc("GET /corral", internal.HandleViewCorral)
 
 	// The Forge: Management endpoints for quest creation and state transitions.
-	mux.HandleFunc("GET /newquest", handleNewQuest)
-	mux.HandleFunc("POST /quests/create", handleCreateQuest)
-	mux.HandleFunc("POST /quests/complete", handleCompleteQuest)
+	mux.HandleFunc("GET /newquest", internal.HandleNewQuest)
+	mux.HandleFunc("POST /quests/create", internal.HandleCreateQuest)
+	mux.HandleFunc("POST /quests/complete", internal.HandleCompleteQuest)
 
 	// Administrative: System settings and category hierarchy management.
-	mux.HandleFunc("GET /settings", handleSettings)
-	mux.HandleFunc("POST /categories/create", handleCreateCategory)
-	mux.HandleFunc("POST /categories/delete", handleDeleteCategory)
-	mux.HandleFunc("POST /settings/archive", ArchiveQuestHandler)
-	mux.HandleFunc("POST /settings/downgrade/", DowngradeQuestHandler)
+	mux.HandleFunc("GET /settings", internal.HandleSettings)
+	mux.HandleFunc("POST /categories/create", internal.HandleCreateCategory)
+	mux.HandleFunc("POST /categories/delete", internal.HandleDeleteCategory)
+	mux.HandleFunc("POST /settings/archive", internal.ArchiveQuestHandler)
+	mux.HandleFunc("POST /settings/downgrade/", internal.DowngradeQuestHandler)
 
 	log.Println("Initialization: Service routes registered successfully.")
 

@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"database/sql"
@@ -78,10 +78,10 @@ func ViewPastureHandler(db *sql.DB) http.HandlerFunc {
 }
 
 // ----- New Quest Logic -----
-// handleCreateQuest processes 'Quest Forge' submissions. It enforces a strict
+// HandleCreateQuest processes 'Quest Forge' submissions. It enforces a strict
 // "Ghost Guard" policy for input validation and ensures that economy-impacting
 // values (like XP) are calculated server-side rather than accepted from the client.
-func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
+func HandleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Redirect(w, r, "/newquest", http.StatusSeeOther)
 		return
@@ -195,9 +195,9 @@ func handleCreateQuest(w http.ResponseWriter, r *http.Request) {
 }
 
 // ----- Quest Complete Logic -----
-// handleCompleteQuest facilitates the transition of a task from 'active' to 'Completed'.
+// HandleCompleteQuest facilitates the transition of a task from 'active' to 'Completed'.
 // It acts as the bridge between the HTTP request and the transactional repository logic.
-func handleCompleteQuest(w http.ResponseWriter, r *http.Request) {
+func HandleCompleteQuest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return

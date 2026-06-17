@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"log"
@@ -8,10 +8,10 @@ import (
 )
 
 // --- Quest Management Routes (The Forge) ---
-// handleNewQuest serves the 'Quest Forge' creation interface.
+// HandleNewQuest serves the 'Quest Forge' creation interface.
 // It aggregates necessary reference data, including categories and users,
 // to populate dynamic form elements.
-func handleNewQuest(w http.ResponseWriter, r *http.Request) {
+func HandleNewQuest(w http.ResponseWriter, r *http.Request) {
 	categories, err := GetCategories(DB)
 	if err != nil {
 		log.Printf("Internal Error: Failed to fetch categories for The Forge: %v", err)
@@ -29,10 +29,10 @@ func handleNewQuest(w http.ResponseWriter, r *http.Request) {
 	RenderTemplate(w, "new_quest", data)
 }
 
-// handleSettings renders the administrative dashboard.
+// HandleSettings renders the administrative dashboard.
 // It allows users to manage the system's organizational hierarchy,
 // specifically the category and user definitions.
-func handleSettings(w http.ResponseWriter, r *http.Request) {
+func HandleSettings(w http.ResponseWriter, r *http.Request) {
 	// For now since I don't have a session manager yet.
 	currentUserID := 1
 
@@ -57,10 +57,10 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 	RenderTemplate(w, "settings", data)
 }
 
-// handleCreateCategory processes submissions for new thematic groupings.
+// HandleCreateCategory processes submissions for new thematic groupings.
 // It enforces basic input sanitization and ensures categorical names
 // meet the system's non-empty string requirements.
-func handleCreateCategory(w http.ResponseWriter, r *http.Request) {
+func HandleCreateCategory(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(r.FormValue("name"))
 	color := r.FormValue("color")
 
@@ -78,10 +78,10 @@ func handleCreateCategory(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/settings", http.StatusSeeOther)
 }
 
-// handleDeleteCategory facilitates the removal of organizational categories.
+// HandleDeleteCategory facilitates the removal of organizational categories.
 // It implements a 'Safety Guard' to prevent the deletion of categories
 // that still have associated quests, preserving relational integrity.
-func handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
+func HandleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("category_id")
 
 	// RELATIONAL INTEGRITY CHECK: Verify no orphaned quests will be created.
@@ -109,10 +109,10 @@ func handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 // ----- Corral Logic -----
-// handleCorralQuests triggers the bulk archival process for finished tasks.
+// HandleCorralQuests triggers the bulk archival process for finished tasks.
 // This endpoint is the primary mechanism for clearing the pasture while
 // maintaining a permanent record in the completion ledger.
-func handleCorralQuests(w http.ResponseWriter, r *http.Request) {
+func HandleCorralQuests(w http.ResponseWriter, r *http.Request) {
 	// Strict Method Enforcement: Idempotent changes must use POST.
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -130,10 +130,10 @@ func handleCorralQuests(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// handleViewCorral renders the historical reporting dashboard.
+// HandleViewCorral renders the historical reporting dashboard.
 // It retrieves the Weekly Summary metrics to provide users with a
 // bird's-eye view of their recent accomplishments.
-func handleViewCorral(w http.ResponseWriter, r *http.Request) {
+func HandleViewCorral(w http.ResponseWriter, r *http.Request) {
 	// Context is passed from the request to allow for cancellation propogation.
 	// For now, using User ID 1
 	summary, err := GetWeeklySummary(r.Context(), DB, 1)
