@@ -2,6 +2,7 @@ services:
   quest-log:
     build: .
     container_name: quest-log
+    image: quest-log:latest
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:

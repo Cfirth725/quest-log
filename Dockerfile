@@ -18,28 +18,29 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # 4. Build
-COPY . .
+COPY internal/ ./internal/
+COPY main.go ./main.go
 # This builds the current directory and all subdirectories
 RUN go build -o quest-log .
 
 # --- Final Stage ---
 FROM debian:bookworm-slim
 
-# Install runtime SQLite library AND wget for healthchecks
+# Install runtime SQLite library, wget, and the timezone database
 RUN apt-get update && apt-get install -y \
     libsqlite3-0 \
     wget \
     tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Force the system to use the local timezone
-ENV TZ=America/New_York
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
 WORKDIR /app
+
+# 1. Pull the compiled binary from the builder stage
 COPY --from=builder /app/quest-log .
-COPY --from=builder /app/templates ./templates
-COPY --from=builder /app/static ./static
+
+# 2. Pull the static folders directly from your local host context
+COPY templates ./templates
+COPY static ./static
 
 RUN chmod +rw /app
 

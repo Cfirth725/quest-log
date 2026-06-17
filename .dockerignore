@@ -8,6 +8,14 @@
 *.csv
 *.txt
 
-# Metadata & History
+# Build Artifacts
+quest-log
+*.exe
+*.bin
+
+# Metadata, Editors & History
 .git
+.obsidian/
+.vscode/
+.idea/
 .DS_Store
