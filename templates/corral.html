@@ -10,9 +10,44 @@
         <p>Your dopamine streak is holding steady. Keep it up.</p>
     </div>
 
-    <h3>Recent Completions</h3>
+    <div class="metrics-grid">
+        <div class="quest-card metric-card">
+            <div class="metric-label">One-Time Milestones</div>
+            <div class="metric-val-blue">{{ .Report.OneTimeCompleted }}</div>
+        </div>
+        <div class="quest-card metric-card">
+            <div class="metric-label">Habit Loops Executed</div>
+            <div class="metric-val-green">{{ .Report.RecurringCompleted }}</div>
+        </div>
+    </div>
+
+    <h3 style="margin-top: 2rem; color: var(--primary-green);">Habit Loop Frequency (7-Day Rolling)</h3>
+    <div style="margin-bottom: 2rem;">
+        {{ range .Report.HabitExecutionLog }}
+        <div class="quest-card" style="margin-bottom: 0.5rem; --dynamic-cat-color: #A0AEC0;">
+            <div style="display: flex; align-items: center;">
+                <div class="quest-accent-bar"></div>
+                <div>
+                    <h4 class="quest-title">{{ .Title }}</h4>
+                    <div class="quest-meta">
+                        <span style="font-weight: bold;">{{ .CategoryName }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="frequency-counter">
+                ×{{ .ExecutionCount }}
+            </div>
+        </div>
+        {{ else }}
+        <div class="empty-state" style="padding: 1.5rem;">
+            <p style="margin: 0; color: var(--text-secondary); font-style: italic;">No recurring loops completed in the last 7 days.</p>
+        </div>
+        {{ end }}
+    </div>
+
+    <h3 style="color: var(--primary-green);">Recent Completions</h3>
     {{ range .RecentWins }}
-    <div class="quest-card" style="opacity: 1; border-style: solid; --dynamic-cat-color: {{ .ColorHex }}">
+    <div class="quest-card" style="--dynamic-cat-color: {{ .ColorHex }}">
         <div style="display: flex; align-items: center;">
             <div class="quest-accent-bar"></div>
             <div>

@@ -143,6 +143,14 @@ func HandleViewCorral(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// --- SUMMARY REPORT ---
+	report, err := GenerateWeeklyCorralReport(DB)
+	if err != nil {
+		log.Printf("Metrics Engine Error: %v", err)
+	} else {
+		summary.Report = report
+	}
+
 	RenderTemplate(w, "corral", summary)
 }
 

@@ -267,7 +267,53 @@ input, select, textarea {
     background-color: #2980B9 !important;
 }
 
-/* --- 9. QUEST LOG SETTINGS & TABLES --- */
+/* --- 9. THE WEEKLY CORRAL DASHBOARD --- */
+.metrics-grid {
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+    gap: 1rem; 
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    justify-content: center; 
+    text-align: center; 
+    padding: 1.5rem; 
+    flex-direction: column;
+}
+
+.metric-label {
+    font-size: 0.85rem; 
+    text-transform: uppercase; 
+    letter-spacing: 0.05em; 
+    color: var(--text-secondary); 
+    font-weight: bold; 
+    margin-bottom: 0.5rem;
+}
+
+.metric-val-blue {
+    font-size: 2.5rem; 
+    font-weight: bold; 
+    color: #3182ce;
+}
+
+.metric-val-green {
+    font-size: 2.5rem; 
+    font-weight: bold; 
+    color: var(--primary-green);
+}
+
+.frequency-counter {
+    font-weight: bold; 
+    font-size: 1.3rem; 
+    padding: 0.4rem 0.8rem; 
+    border-radius: var(--radius-sm); 
+    background: var(--bg-color); 
+    color: var(--primary-green); 
+    border: 1px solid var(--border-color);
+}
+
+/* --- 10. QUEST LOG SETTINGS & TABLES --- */
 .settings-main-title {
     text-align: center;
     margin-bottom: 1rem;
@@ -324,7 +370,7 @@ input, select, textarea {
 .color-picker { width: 60px !important; padding: 2px !important; height: 42px; }
 .small-btn { width: auto !important; padding: 0.5rem 1.5rem !important; }
 
-/* --- 10. MOBILE RESPONSIVENESS & POLISH --- */
+/* --- 11. MOBILE RESPONSIVENESS & POLISH --- */
 @media (max-width: 600px) {
     nav, .nav-flex, .nav-links {
         display: grid !important;

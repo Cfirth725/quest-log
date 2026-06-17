@@ -53,6 +53,7 @@ type CorralSummary struct {
 	TotalXP    int
 	QuestCount int
 	RecentWins []QuestCompletionRow
+	Report     *OperationalReport
 }
 
 // QuestCompletionRow describes a single historical record of a finished task.
@@ -94,4 +95,20 @@ type SpawnerResult struct {
 type SettingsPageData struct {
 	Categories []Category
 	Quests     []QuestResponse
+}
+
+// OperationalReport holds the high-level split metrics and the fine-grained habit counts
+type OperationalReport struct {
+	StartDate          time.Time
+	EndDate            time.Time
+	OneTimeCompleted   int
+	RecurringCompleted int
+	HabitExecutionLog  []HabitFrequency
+}
+
+// HabitFrequency tracks how many times a specific recurring task was completed in the window
+type HabitFrequency struct {
+	Title          string
+	CategoryName   string
+	ExecutionCount int
 }

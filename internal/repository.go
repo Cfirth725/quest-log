@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 // GetActiveQuests retrieves all actionable tasks for a specific user.
@@ -229,4 +230,68 @@ func DowngradeToOneTime(ctx context.Context, db *sql.DB, id int) error {
 		return fmt.Errorf("repository: failed to downgrade quest %d: %w", id, err)
 	}
 	return nil
+}
+
+// GenerateWeeklyCorralReport compiles metrics and execution counts for a 7-day rolling window
+func GenerateWeeklyCorralReport(db *sql.DB) (*OperationalReport, error) {
+	report := &OperationalReport{
+		EndDate: time.Now(),
+		// Looking back exactly 7 days, adjusted for your 4 AM game-day line
+		StartDate: time.Now().AddDate(0, 0, -7),
+	}
+
+	// 1. Compute high-level operational splits using your quest_completions logs
+	splitQuery := `
+		SELECT 
+			COUNT(CASE WHEN q.quest_type = 'One-Time' THEN 1 END) as one_time_count,
+			COUNT(CASE WHEN q.quest_type != 'One-Time' THEN 1 END) as recurring_count
+		FROM quest_completions qc
+		JOIN quests q ON qc.quest_id = q.id
+		WHERE qc.completed_at >= datetime('now', '-7 days', '-4 hours')
+		  AND q.deleted_at IS NULL
+	`
+
+	err := db.QueryRow(splitQuery).Scan(
+		&report.OneTimeCompleted,
+		&report.RecurringCompleted,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Compute exact execution frequencies for recurring task loops
+	habitQuery := `
+		SELECT 
+			q.title,
+			COALESCE(c.name, 'Uncategorized') AS category_name,
+			COUNT(qc.id) AS execution_count
+		FROM quest_completions qc
+		JOIN quests q ON qc.quest_id = q.id
+		LEFT JOIN categories c ON q.category_id = c.id
+		WHERE q.quest_type != 'One-Time'
+		  AND qc.completed_at >= datetime('now', '-7 days', '-4 hours')
+		  AND q.deleted_at IS NULL
+		GROUP BY q.title, category_name
+		ORDER BY execution_count DESC, category_name ASC
+	`
+
+	rows, err := db.Query(habitQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var h HabitFrequency
+		if err := rows.Scan(&h.Title, &h.CategoryName, &h.ExecutionCount); err != nil {
+			return nil, err
+		}
+		report.HabitExecutionLog = append(report.HabitExecutionLog, h)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return report, nil
 }
