@@ -68,13 +68,13 @@ Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replac
 - [x] **Data Pruning Ledger:** Designing a background utility to safely purge historical logs from `quest_completions` older than a defined retention window (e.g., 14 days) to permanently limit SQLite file bloat.
 - [x] **Automated Disaster Recovery:** Scripting a lightweight cron routine to create timestamped, compressed backups (`tar.gz`) of the SQLite database file, keeping a rolling window of copies stored safely outside the live container volume.
 
-#### **Phase 6: Analytics Ledger & Interface Sorting (PLANNED)**
-- [ ] **The Weekly Corral Summary Engine:** Build an aggregation pipeline that runs every Sunday evening to compile a weekly operational report:
+#### **Phase 6: Analytics Ledger & Interface Sorting (COMPLETED)**
+- [x] **The Weekly Corral Summary Engine:** Build an aggregation pipeline that runs every Sunday evening to compile a weekly operational report:
     - Compute exact execution frequency counts per task (e.g., "You completed *Daily Gym* 5 times this week!").
     - Generate metrics breaking down completed One-Time Quests vs. Recurring/Daily Operations.
-- [ ] **Triage Layout Sorting:** Refactor the frontend query engine to sort active Dailies dynamically by **Category Grouping** instead of default database creation time, keeping similar contexts clustered together visually.
+- [x] **Triage Layout Sorting:** Refactor the frontend query engine to sort active Dailies dynamically by **Category Grouping** instead of default database creation time, keeping similar contexts clustered together visually.
 
-#### **Phase 7: The Ingestion Bridge**
+#### **Phase 7: The Ingestion Bridge (PLANNED)**
 - [ ] **Automated Seeding:** Building a JSON bulk-importer for rapid task generation.
 - [ ] **API Exposure:** Finalizing the headless endpoint for Obsidian Dataview visualization.
 
