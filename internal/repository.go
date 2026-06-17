@@ -36,7 +36,7 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int, momentumMode b
 			CASE WHEN q.status = 'active' THEN 0 ELSE 1 END ASC,
 			category_name ASC,              -- Dynamic Category Grouping Cluster
 			q.is_non_negotiable DESC,       -- Pin non-negotiables inside that group
-			q.created_at DESC
+			q.created_at ASC                -- Displays oldest quests first (chronological order)
 	`, momentumFilter)
 
 	// Using QueryContext to ensure database operations respect application lifecycle
