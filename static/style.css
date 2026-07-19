@@ -60,12 +60,9 @@ main {
 
 /* --- 3. SYSTEM NAVIGATION & FOOTER MATRIX --- */
 nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: center; 
-    padding: 1.5rem 1rem;
     border-bottom: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    padding: 0.5rem 1rem;
 }
 
 .nav-flex { 
@@ -74,17 +71,26 @@ nav {
     align-items: center; 
 }
 
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .nav-links a { 
-    margin-left: 1.25rem; 
     text-decoration: none; 
-    color: var(--primary-accent); 
+    color: #A0AEC0;
     font-weight: 600;
     font-size: 0.95rem;
-    transition: color 0.15s ease;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .nav-links a:hover {
     color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 footer { 
@@ -276,21 +282,51 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* --- 8. BUTTONS & ACTIVE USER INTERACTION --- */
-.submit-btn, .complete-btn {
+.submit-btn {
     background: var(--primary-accent);
     color: #12161F;
     border: none;
+    padding: 1rem;
+    font-size: 1.1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 700;
+    width: 100%;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+}
+
+.submit-btn:hover { 
+    opacity: 0.9; 
+    transform: scale(1.01); 
+}
+
+/* Sleek Dark Slate Resolution Button */
+.complete-btn {
+    background: #232D3F; /* Deep steel/slate surface */
+    color: #CBD5E0; /* Soft readable ash-white text */
+    border: 1px solid rgba(160, 174, 192, 0.2); /* Muted silver border frame */
     padding: 0.6rem 1.4rem;
     border-radius: var(--radius-md);
     cursor: pointer;
     font-weight: 700;
-    transition: transform 0.1s ease, opacity 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
 }
 
-.submit-btn { width: 100%; padding: 1rem; font-size: 1.1rem; }
-.submit-btn:hover, .complete-btn:hover { opacity: 0.9; transform: scale(1.01); }
+.complete-btn:hover {
+    background: #2D3748;
+    color: #FFFFFF;
+    border-color: rgba(160, 174, 192, 0.4);
+    box-shadow: 0 0 10px rgba(160, 174, 192, 0.15);
+    transform: translateY(-1px);
+}
 
-/* Momentum Mode Control / Filter Button */
+.complete-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Momentum Mode Control / Filter Button (Base - Triage Red) */
 .momentum-btn {
     background: #1E2533;
     color: var(--momentum-red);
@@ -299,22 +335,28 @@ input:focus, select:focus, textarea:focus {
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-    transition: all 0.2s ease;
-}
-.momentum-btn:hover { 
-    background: rgba(229, 62, 62, 0.1); 
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
 }
 
-/* Active Filtration State */
+.momentum-btn:hover { 
+    background: rgba(229, 62, 62, 0.1); 
+    box-shadow: 0 0 8px rgba(229, 62, 62, 0.2);
+}
+
+/* Active Filtration State (Engaged - Glowing Obsidian Blue) */
 .momentum-btn.active-mode {
-    background-color: #3182CE !important;
-    color: #FFFFFF !important;
-    border-color: #2B6CB0 !important;
-    box-shadow: 0 0 12px rgba(49, 130, 206, 0.3);
+    background: #1A2438 !important;
+    color: #63B3ED !important;
+    border: 1px solid rgba(99, 179, 237, 0.5) !important;
+    box-shadow: 0 0 12px rgba(49, 130, 206, 0.4) !important;
 }
 
 .momentum-btn.active-mode:hover {
-    background-color: #2B6CB0 !important;
+    background: #233252 !important;
+    color: #FFFFFF !important;
+    border-color: #63B3ED !important;
+    box-shadow: 0 0 16px rgba(49, 130, 206, 0.6) !important;
 }
 
 /* --- 9. THE CHRONICLE LEDGER REVIEW --- */
@@ -428,31 +470,35 @@ input:focus, select:focus, textarea:focus {
 
 /* --- 11. LAYOUT MOBILE RESPONSIVENESS CAPABILITIES --- */
 @media (max-width: 600px) {
-    nav, .nav-flex, .nav-links {
-        display: grid !important;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
+    /* Stack the logo above the navigation grid */
+    .nav-flex {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    /* Convert link container into a clean, tap-friendly 2x2 grid matrix */
+    .nav-links {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
         width: 100%;
-        padding: 0.5rem; 
         box-sizing: border-box;
     }
 
-    nav a, .nav-links a {
+    .nav-links a {
         display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 0.5rem 2px; 
+        padding: 0.6rem 4px; 
         margin: 0 !important;
         border: 1px solid var(--border-color);
         border-radius: var(--radius-sm);
-        font-size: 0.75rem;      
+        font-size: 0.85rem;      
         font-weight: 700;
-        text-decoration: none;
-        color: var(--primary-accent);
-        min-height: 40px;
         background: var(--card-bg);
-        word-break: break-word; 
+        min-height: 44px;
     }
 
     main {

@@ -5,12 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quest Log: {{ block "title" . }}System{{ end }}</title>
-    <link rel="stylesheet" href="/static/style.css?v=3.0.1">
+    <link rel="stylesheet" href="/static/style.css?v=3.0.2">
 </head>
 <body>
     <nav>
         <div class="container nav-flex">
-            <div style="font-size: 1.2rem; font-weight: bold; color: var(--text-primary);">🛡️ Bounty Board</div>
+            <div style="font-size: 1.2rem; font-weight: bold; color: var(--text-primary);">🌿 Quest Log</div>
             <div class="nav-links">
                 <a href="/">Bounty Board</a>
                 <a href="/newquest">The Forge</a>
@@ -24,7 +24,7 @@
         {{ template "content" . }}
     </main>
 
-    <footer>I'm not procrastinating, I'm doing side quests! • 2026</footer>
+    <footer>I'm not procrastinating... I'm doing side quests! • July 2026</footer>
 </body>
 </html>
 {{ end }}

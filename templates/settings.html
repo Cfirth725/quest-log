@@ -1,6 +1,6 @@
 {{ define "content" }}
 <div class="container settings-wrapper">
-    <h2 class="settings-main-title" style="color: var(--text-primary);">System Configurations</h2>
+    <h2 class="settings-main-title" style="color: var(--text-primary);">⚙️ System Configurations</h2>
 
     <section class="form-container">
         <h3 style="margin-top: 0; color: var(--text-primary);">Forge New Category</h3>
@@ -69,7 +69,7 @@
                                 </span>
                             </td>
                             <td>
-                                <form action="/settings/downgrade/" method="POST">
+                                <form action="/settings/downgrade" method="POST">
                                     <input type="hidden" name="id" value="{{ .ID }}">
                                     <button type="submit" class="delete-btn-text" style="color: var(--primary-accent);">Make One-Time</button>
                                 </form>
