@@ -1,87 +1,120 @@
-
 # 🛡️ Quest Log (The Forge)
+An offline-first, high-performance background engine and task management system built in Go. Operating locally on home lab infrastructure, it coordinates task-based urgency lifecycles and gamified behavioral analytics for multiple isolated user profiles.
 
-A Go-based **Relational Task Engine** and CRUD application running on the **Milford Node**. This project implements a gamified, ADHD-friendly productivity framework designed to bridge the gap between high-level creative goals and daily executive function.
+This repository implements a resilient, ADHD-friendly execution framework designed to bridge the gap between long-term high-level goals (such as system design mastery, literature production, and physical conditioning) and daily executive function.
 
-## Project Overview
+## 🏗️ Core System Architecture
+Quest Log functions as a modular web application. By replacing traditional time-blocking models with **Task-Based Urgency** and server-validated **Dopamine-Linked Rewards**, this tool maintains a structured workspace to balance shared operations and personal micro-milestones.
 
-Quest Log acts as the "Command Center" for the Milford Node ecosystem. By replacing traditional time-blocking with **Task-Based Urgency** and **Dopamine-Linked Rewards**, this tool provides a structured environment to manage shared household operations and individual professional growth.
+```
+                  ┌────────────────────────────────────────┐
+                  │          static/css/style.css          │
+                  │   (Low-Contrast Migraine-Safe CSS)     │
+                  └───────────────────┬────────────────────┘
+                                      │ (Token Extraction)
+                                      ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                          internal/web/ (Handlers)                      │
+│   Parses Inbound Payloads • Form Sanitization • Template Composition   │
+└───────────────┬────────────────────────────────────────┬───────────────┘
+                │                                        │
+                │ (Transactional Writes)                 │ (Evaluates State)
+                ▼                                        ▼
+┌──────────────────────────────┐        ┌────────────────────────────────┐
+│ internal/repository/ (DAO)   │        │     internal/database/         │
+│   Executes Ledger Operations │        │   Connection Pool Enclosure    │
+└───────────────┬──────────────┘        └────────────────┬───────────────┘
+                │                                        │
+                └────────────────────┐ ┌─────────────────┘
+                                     ▼ ▼
+				┌────────────────────────────────────────┐
+				│            data/quests.db              │
+				│       (SQLite3 Engine • WAL Mode)      │
+				└────────────────────────────────────────┘
+```
 
-### Key Features
+## ⚡ Task Lifecycle Processing & Telemetry Ingestion
+```
+[User Action Input]
+ │  POST /quests/create (Form Ingestion Gateway)
+ ▼
+[Ghost Guard Layer]
+ │  String whitespace sanitization & structural check gates
+ ▼
+[Type Evaluation Fork]
+ │
+ ├───► (One-Time Bounty) ──► Insert directly into active ledger array
+ │
+ ├───► (Repeating Loop) ───► Calculate post-completion custom interval gap
+ │
+ └───► (Static Weekly) ────► Bind reset vector to target day-of-week integer
+ ▼
+[Hard-Coded Economy Validation]
+ │  Parse incoming tier index token (1, 2, or 3)
+ │  Map signature reward currency programmatically:
+ │    - Tier 1: 🪙 Coin (1 XP)
+ │    - Tier 2: 💰 Moneybag (5 XP)
+ │    - Tier 3: 👑 Crown (10 XP)
+ ▼
+[Database Execution Pool]
+ │  Commit parsed record down to database.DB connection context
+ ▼
+[State Complete Signal]
+ └─► POST /quests/complete ──► Log to Immutable Chronicle Ledger (`quest_completions`)
+```
 
-- **The Logic Trio (Defensive Engineering):**
-    - **Ghost Guard:** Server-side validation and atomic `sql.Transaction` logic to prevent partial writes and ensure data sanitization.
-    - **Hard-Coded Economy:** A "Number Compressed" XP system ($1, 5, 10$) to prevent reward-inflation and maintain consistent effort-tracking.
-    - **Priority Shield:** A high-visibility triage layer that floats "Non-Negotiable" quests to the top of the stack.
-- **Automated Quest Lifecycle:** An intelligent background **Master Spawner** that automates the friction of tracking recurring tasks. It handles daily resets, complex intervals, and weekly cycles automatically, ensuring your operational dashboard mirrors your real-world routines.
-- **The Weekly Corral:** A dedicated historical ledger (`quest_completions`) that decouples task state from accomplishment tracking. It provides a visual "Pile of Wins" that persists even after the "Pasture" is cleared.
-- **Idempotent Infrastructure:** A single-binary deployment model using `go:embed` to bake the SQL schema directly into the application, ensuring a portable and consistent environment.
-- **State-Machine Management:** Integrated "Pivot" logic allowing users to downgrade repeating tasks to **One-Time** quests dynamically, adapting to fluctuating cognitive energy levels.
+## 🎛️ Core Philosophy & Engineering Constraints
+1. **Low-Contrast Visual Architecture:** Built explicitly around a custom-tuned, light-absorbing dark mode canvas (`#12161F` and `#1E2533`). By abandoning high-contrast white text flashes and intense neon saturation, the system layout drastically limits cognitive eye strain and prevents visual vibration during barometric pressure swings.
+2. **The Hard-Coded Economy:** Eliminates arbitrary point value inflation. Task rewards are strictly compressed to static server-evaluated integers ($1$, $5$, $10$), ensuring long-term ledger consistency.
+3. **Strategic Momentum Triage:** Implements an immediate frontend filter toggle ("Momentum Mode"). When active, the query engine limits database scanning outputs exclusively to `is_non_negotiable` tasks, lowering the interface cognitive load down to zero during tight windows.
+4. **Structured DevOps Telemetry:** Employs explicit, machine-readable console visual tracking wrappers (`[INIT]`, `[SECURE]`, `[OK]`, `[ERROR]`, `[REALTIME]`) to ensure clean terminal observation under container runtimes.
+5. **Idempotent Storage Infrastructure:** Combines strict relational SQLite constraint safety layers with a transactional background checkpoint mechanism to guarantee file persistence inside Docker volume boundaries.
 
-### Infrastructure & Deployment
-- The Quest Log is designed to run as a resilient "Always-On" service on the **Milford Node** (Raspberry Pi 3B).
-- **Container Orchestration:** Managed via Docker Compose with directory-level volume persistence to ensure SQLite journal files (`-wal` and `-shm`) survive container lifecycles.
-- **Precision Timekeeping:** Uses `_loc=Local` and `parseTime=true` DSN parameters to align the Go application layer with the physical hardware clock, ensuring accurate "Weekly Win" telemetry.
-- **Multi-Stage Builds:** A optimized Debian-based Dockerfile that balances a heavy GCC build environment (for CGO/SQLite) with a slim production runtime.
+## 🛠️ Tech Stack & Runtime
+- **Language Runtime:** Go 1.24+ (Native structured templates, type-safe error propagation, and context-aware database bindings)
+- **Database Engine:** SQLite 3 via `github.com/mattn/go-sqlite3` operating under Write-Ahead Logging (`WAL` mode)
+- **Design System:** Vanilla CSS3 (Centralized Design Tokens)
+- **Orchestration Matrix:** Docker Multi-stage Linux Build
 
-## Tech Stack
-- **Language:** Go (Golang) 1.2x
-- **Scheduling:** `robfig/cron/v3`
-- **Database:** SQLite3 (WAL Mode, Relational Schema with `CHECK` constraints)
-- **Frontend:** HTML5 | CSS3 (Modular Token-Based Design) | Go Templates
+## 🗺️ Execution Roadmap
+#### **Phase 1: The Core Foundation (COMPLETED)**
+- [x] Establish Go-SQLite connectivity with decoupled, unified `RenderTemplate` compilation utilities.
+- [x] Implement **The Logic Trio**: Ghost Guard input validation, Hard-Coded Economy scaling values, and Critical Path Priority Shields.
+- [x] Design dynamic Category loading matrices with custom Hex-code visual mapping hooks.
 
-## Database Architecture
+#### **Phase 2: Transition & Reward Ledger (COMPLETED)**
+- [x] **Atomic Transactions:** Secure the transactional logic loop inside `CompleteQuest` to eliminate multi-write database faults.
+- [x] **The Chronicle Base:** Construct the immutable historical database table `quest_completions` to log completion data and metrics independently.
+- [x] **Timezone Alignment:** Bind data collection and query scopes to local hardware clock configurations (`_loc=Local`) to stabilize automated window resets.
 
-|**Entity**|**Purpose**|**Key Logic**|
-|---|---|---|
-|**Quests**|The Core Unit|Difficulty mapping (Duck/Sheep/Cow)|
-|**Users**|Persistence Layer|Tracks `dopamine_streak` and user-specific stats|
-|**Completions**|The Ledger|Immutable history of XP awarded|
-|**Categories**|Visual Context|Hex-code mapping for `quest-accent-bar`|
-|**Archive**|Soft-Delete Layer|Implements `deleted_at` for non-destructive task retirement|
+#### **Phase 3: Domain Package Hardening (COMPLETED)**
+- [x] **Standard Package Decoupling:** Re-architect monolithic, single-file internal spaces into clean, scoped domain package boundaries (`database`, `repository`, `web`).
+- [x] **Directory Relocation:** Shift the system execution boot layout to `cmd/main.go` to conform to standard Go project layouts.
+- [x] **Terminology Migration:** Wipe away legacy agricultural labels across all components, updating references to **Bounty Board**, **The Forge**, and **The Chronicle**.
 
-## Execution Roadmap
+#### **Phase 4: Focus Telemetry & Visual Refactor (COMPLETED)**
+- [x] **Muted Obsidian Theme:** Deploy a low-contrast, custom dark mode interface across all layout files to prevent cognitive fatigue and eye strain.
+- [x] **Active View Triage Toggle:** Connect the frontend **"Momentum Mode"** switch to a URL query parameter filtration mechanism that hides standard targets under high-pressure scenarios.
+- [x] **Cache Shielding:** Apply version parameter strings (`style.css?v=3.0.1`) to elements to cleanly bypass aggressive local browser stylesheet caching bugs.
 
-#### **Phase 1: The Core Foundation (COMPLETE)**
-- [x] Establish Go-SQLite connectivity with unified `RenderTemplate` logic.
-- [x] Implement **The Logic Trio**: Ghost Guard, Hard-Coded Economy, and Priority Shield.
-- [x] Design dynamic Category loading with Hex-code visual mapping.
-
-#### **Phase 2: Transition & Reward Engine (COMPLETE)**
-- [x] **Atomic Transactions:** Finalized `CompleteQuest` logic to ensure data integrity.
-- [x] **The Reward Ledger:** Implementation of the **Weekly Corral** to track XP independently.
-- [x] **Portable Schema:** Integrated `go:embed` for idempotent database initialization.
-
-#### **Phase 3: Executive Function Hardening (COMPLETE)**
-- [x] **Modular Architecture:** Refactored codebase into a professional multi-file structure.
-- [x] **Master Spawner Logic:** Implemented Cron-based resets for `Daily`, `Repeating`, and day-of-week `Weekly` quests.
-- [x] **Design System Refactor:** Migrated to a centralized, token-based CSS architecture for better maintainability.
-
-#### **Phase 4: Resiliency & Telemetry (COMPLETE)**
-- [x] **The "Bad Brain Day" Momentum Filter:** UI-triggered backend toggle to restrict views to `is_non_negotiable` tasks.
-- [x] **Soft-Delete Safety Net:** Implemented non-destructive deletion via `deleted_at` timestamps.
-- [x] **Resilient Data Plumbing:** Implemented **Graceful Shutdown** orchestration to handle `SIGINT`/`SIGTERM`, ensuring `db.Close()` merges SQLite WAL files before container exit.
-    - Synchronized the **Milford Node** clock to local time, anchoring automated resets (Dailies) to a 4:00 AM local window rather than UTC midnight.
-
-#### **Phase 5: Storage Optimization & Maintenance (COMPLETE)**
-- [x] **Engine Hygiene:** Implementing automated `db.Exec("VACUUM")` database compaction routines to claim unallocated disk sectors after data purging.
-- [x] **Data Pruning Ledger:** Designing a background utility to safely purge historical logs from `quest_completions` older than a defined retention window (e.g., 14 days) to permanently limit SQLite file bloat.
-- [x] **Automated Disaster Recovery:** Scripting a lightweight cron routine to create timestamped, compressed backups (`tar.gz`) of the SQLite database file, keeping a rolling window of copies stored safely outside the live container volume.
+#### **Phase 5: Storage Optimization & Maintenance (COMPLETED)**
+- [x] **Engine Hygiene:** Automated `db.Exec("VACUUM")` database compaction routines to claim unallocated disk sectors after data purging.
+- [x] **Data Pruning Ledger:** Background utility to safely purge historical logs from `quest_completions` older than a defined retention window (e.g., 14 days) to permanently limit SQLite file bloat.
+- [x] **Automated Disaster Recovery:** Lightweight cron routine to create timestamped, compressed backups (`tar.gz`) of the SQLite database file, keeping a rolling window of copies stored safely outside the live container volume.
+- [x] **Graceful Teardown Loop:** Configure system lifecycle interrupt interceptors (`SIGINT`, `SIGTERM`) to force connection pool checkpoints, ensuring SQLite cleanly collapses WAL files back to disk on container exits.
 
 #### **Phase 6: Analytics Ledger & Interface Sorting (COMPLETED)**
-- [x] **The Weekly Corral Summary Engine:** Build an aggregation pipeline that runs every Sunday evening to compile a weekly operational report:
-    - Compute exact execution frequency counts per task (e.g., "You completed *Daily Gym* 5 times this week!").
-    - Generate metrics breaking down completed One-Time Quests vs. Recurring/Daily Operations.
-- [x] **Triage Layout Sorting:** Refactor the frontend query engine to sort active Dailies dynamically by **Category Grouping** instead of default database creation time, keeping similar contexts clustered together visually.
+- [x] **The Chronicle Summary Engine:** Build an aggregation pipeline that runs every Sunday evening to compile a weekly operational report tracking precise execution frequencies and task type breakdowns.
+- [x] **Triage Layout Sorting:** Refactor the frontend query logic to sort active contracts by matching **Category Grouping** arrays instead of default table insert sequence, visually grouping identical real-world contexts together.
 
 #### **Phase 7: The Ingestion Bridge (PLANNED)**
-- [ ] **Automated Seeding:** Building a JSON bulk-importer for rapid task generation.
-- [ ] **API Exposure:** Finalizing the headless endpoint for Obsidian Dataview visualization.
+- [ ] **Automated Seeding Engine:** Build a file-based JSON bulk-importer for fast profile onboarding and contract minting.
+- [ ] **Headless API Exposure:** Secure headless endpoints to pipe live task analytics straight into Obsidian Dataview notebooks via local JSON payloads.
 
-#### **Phase 8: Multi-User Architecture & Personalization**
-- [ ] **Auth Layer:** Implementing secure session management and user-specific pasture views.
-- [ ] **Interface Themes:** Integrating native token-based Dark Mode configuration flags.
+#### **Phase 8: Multi-User Architecture & Personalization (PLANNED)**
+- [ ] **Session Authentication Layer:** Implement a lightweight, secure session state manager to protect individual dashboard profiles.
+- [ ] **Dynamic Interface Swapping:** Finalize native design token flags to support clean switching to alternative styles (like a future `style_light.css`) seamlessly from the web interface.
 
-#### **Phase 9: Advanced Environmental Integrations**
-- [ ] **The Gear Check Lock:** Pre-flight validation step where quests remain locked until `gear_checks` are toggled.
-- [ ] **Atmospheric Trigger:** Integrating with the local `Barometric Guard` daemon to suggest "Low-Energy Mode" during intense pressure drops.
+#### **Phase 9: Advanced Environmental Integrations (PLANNED)**
+- [ ] **Pre-Flight Gear Check Lock:** Design conditional contract gating where active bounties remain locked out in the UI until explicit pre-requisite check toggles are verified.
+- [ ] **Atmospheric Automation Trigger:** Integrate local background telemetry daemons with your custom `Barometric Guard` API to automatically signal the application to suggest turning on **Momentum Mode** during severe pressure drops.
