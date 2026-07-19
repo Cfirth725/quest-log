@@ -1,12 +1,12 @@
 {{ define "content" }}
 <div class="form-container">
-    <h2 style="text-align: center; margin-top: 0;">⚒️ The Quest Forge</h2>
+    <h2 style="text-align: center; margin-top: 0; color: var(--text-primary);">⚒️ The Quest Forge</h2>
     
     <form action="/quests/create" method="POST">
         
         <div class="form-group">
             <label for="title">Quest Title</label>
-            <input type="text" id="title" name="title" placeholder="Enter task description..." required>
+            <input type="text" id="title" name="title" placeholder="Enter contract specification..." required>
         </div>
 
         <div class="form-group">
@@ -21,7 +21,7 @@
         <div class="form-group">
             <label for="owner_id">Assign To</label>
             <select id="owner_id" name="owner_id">
-                    <option value="0">🏠 Household (Shared)</option>
+                <option value="0">🏠 Household (Shared)</option>
                 {{ range .Users }}
                     <option value="{{ .ID }}">{{ .Name }}</option>
                 {{ end }}
@@ -30,13 +30,15 @@
 
         <div class="form-group">
             <label for="difficulty">Quest Difficulty</label>
-            <select id="difficulty" name="difficulty">
-                <option value="" disabled selected>Select effort level...</option>
-                <option value="1">🦆 Duck (Quick & Simple - 1 XP)</option>
-                <option value="2">🐑 Sheep (Standard Effort - 5 XP)</option>
-                <option value="3">🐄 Cow (Major Accomplishment - 10 XP)</option>
+            <select id="difficulty" name="difficulty" required>
+                <option value="" disabled selected>Select effort tier...</option>
+                <option value="1">🪙 Coin (Quick & Simple - 1 XP)</option>
+                <option value="2">💰 Moneybag (Standard Effort - 5 XP)</option>
+                <option value="3">👑 Crown (Major Accomplishment - 10 XP)</option>
             </select>
-            <small>Base XP is calculated server-side to ensure economy integrity.</small>
+            <small style="color: var(--text-secondary); display: block; margin-top: 4px;">
+                Base XP calculations are managed server-side to preserve configuration integrity.
+            </small>
         </div>
 
         <div class="form-group">
@@ -49,16 +51,16 @@
             </select>
         </div>
 
-        <div class="form-group" id="interval_group" style="display: none; border-left: 3px solid var(--milford-green); padding-left: 15px;">
+        <div class="form-group" id="interval_group" style="display: none; border-left: 3px solid var(--primary-accent); padding-left: 15px;">
             <label for="repeat_interval_days">Repeat Interval (Days)</label>
-            <input type="number" id="repeat_interval_days" name="repeat_interval_days" min="1" placeholder="e.g. 7 for weekly">
-            <small>Quest will respawn X days after it is marked completed.</small>
+            <input type="number" id="repeat_interval_days" name="repeat_interval_days" min="1" placeholder="e.g. 7 for rolling weekly">
+            <small style="color: var(--text-secondary);">Quest will respawn X days after it is marked completed.</small>
         </div>
 
-        <div class="form-group" id="weekly_reset_group" style="display: none; border-left: 3px solid var(--primary-green); padding-left: 15px;">
+        <div class="form-group" id="weekly_reset_group" style="display: none; border-left: 3px solid var(--primary-accent); padding-left: 15px;">
             <label for="reset_day_of_week">Weekly Reset Day</label>
             <select id="reset_day_of_week" name="reset_day_of_week">
-                <option value="0" selected>Sunday (Default Shared Reset)</option>
+                <option value="0" selected>Sunday (Default Shard Reset)</option>
                 <option value="1">Monday</option>
                 <option value="2">Tuesday</option>
                 <option value="3">Wednesday</option>
@@ -66,7 +68,7 @@
                 <option value="5">Friday</option>
                 <option value="6">Saturday</option>
             </select>
-            <small>The quest will automatically reactivate at 04:03 AM on the selected morning.</small>
+            <small style="color: var(--text-secondary);">The contract will automatically reactivate at 04:03 AM on the selected morning.</small>
         </div>
 
         <script>
@@ -76,17 +78,18 @@
                 const intervalInput = document.getElementById('repeat_interval_days');
                 const weeklyGroup = document.getElementById('weekly_reset_group');
                 
+                // Reset conditional UI states cleanly to prevent multi-select leakage
+                intervalGroup.style.display = 'none';
+                intervalInput.required = false;
+                weeklyGroup.style.display = 'none';
+
                 if (type === 'Repeating') {
                     intervalGroup.style.display = 'block';
                     intervalInput.required = true;
                 } else if (type === 'Weekly') {
-                    intervalGroup.style.display = 'none';
-                    intervalInput.required = false;
                     intervalInput.value = '';
                     weeklyGroup.style.display = 'block';
                 } else {
-                    intervalGroup.style.display = 'none';
-                    intervalInput.required = false;
                     intervalInput.value = '';
                 }
             }
@@ -94,8 +97,8 @@
 
         <div class="checkbox-label-wrapper">
             <input type="checkbox" id="is_non_negotiable" name="is_non_negotiable" value="1">
-            <label for="is_non_negotiable" style="font-weight: bold; color: var(--milford-green); margin-bottom: 0; cursor: pointer;">
-                Activate Priority Shield (Non-Negotiable)
+            <label for="is_non_negotiable" style="font-weight: 600; color: var(--momentum-red); margin-bottom: 0; cursor: pointer;">
+                Activate Critical Path Priority Shield
             </label>
         </div>
 

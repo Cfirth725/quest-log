@@ -1,10 +1,12 @@
-# We use 'bookworm' instead of 'alpine' for better SQLite compatibility
+# ====================================================================
+# -- STAGE 1: COMPILATION & ARCHITECTURE BUILDER --
+# ====================================================================
 FROM golang:1.24-bookworm AS builder
 
-# 1. Force CGO on
+# Enforce CGO compilation to ensure the mattn/go-sqlite3 C-bindings link correctly
 ENV CGO_ENABLED=1
 
-# 2. Install standard build tools
+# Install essential compilation toolchains for SQLite C-bindings
 RUN apt-get update && apt-get install -y \
     gcc \
     libc6-dev \
@@ -13,20 +15,23 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# 3. Handle dependencies
+# Cache Layer optimization: Copy and download modules first
 COPY go.mod go.sum ./
 RUN go mod download
 
-# 4. Build
+# Ingest all sub-packages and directories required for compilation
 COPY internal/ ./internal/
-COPY main.go ./main.go
-# This builds the current directory and all subdirectories
-RUN go build -o quest-log .
+COPY cmd/ ./cmd/
 
-# --- Final Stage ---
+# Build the binary targeting your new cmd/main.go entrypoint location
+RUN go build -o quest-log ./cmd/main.go
+
+# ====================================================================
+# -- STAGE 2: IMMUTABLE DISTROLITH RUNTIME ENVIRONMENT --
+# ====================================================================
 FROM debian:bookworm-slim
 
-# Install runtime SQLite library, wget, and the timezone database
+# Install light dynamic runtime libraries, health check dependencies, and tzdata
 RUN apt-get update && apt-get install -y \
     libsqlite3-0 \
     wget \
@@ -35,13 +40,20 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# 1. Pull the compiled binary from the builder stage
+# Secure and pull the compiled Go runtime binary from the builder stage
 COPY --from=builder /app/quest-log .
 
-# 2. Pull the static folders directly from your local host context
-COPY templates ./templates
-COPY static ./static
+# Ingest frontend visualization assets and document layouts
+COPY templates/ ./templates/
+COPY static/ ./static/
 
-RUN chmod +rw /app
+# Establish a persistent data folder block on the container host filesystem
+RUN mkdir -p /app/data && chmod -R 755 /app
+
+# Document the designated deployment communication socket
+EXPOSE 8081
+
+# Expose the data path as a volume mount location for long-term database persistence
+VOLUME ["/app/data"]
 
 CMD ["./quest-log"]

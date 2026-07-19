@@ -5,16 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quest Log: {{ block "title" . }}System{{ end }}</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=3.0.1">
 </head>
 <body>
     <nav>
         <div class="container nav-flex">
-            <div style="font-size: 1.2rem; font-weight: bold;">🐑 The Pasture</div>
+            <div style="font-size: 1.2rem; font-weight: bold; color: var(--text-primary);">🛡️ Bounty Board</div>
             <div class="nav-links">
-                <a href="/">The Pasture</a>
+                <a href="/">Bounty Board</a>
                 <a href="/newquest">The Forge</a>
-                <a href="/corral">The Corral</a>
+                <a href="/chronicle">The Chronicle</a>
                 <a href="/settings">Settings</a>
             </div>
         </div>
@@ -24,7 +24,7 @@
         {{ template "content" . }}
     </main>
 
-    <footer>Milford Node • 2026</footer>
+    <footer>I'm not procrastinating, I'm doing side quests! • 2026</footer>
 </body>
 </html>
 {{ end }}

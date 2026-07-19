@@ -1,23 +1,29 @@
 /* ================================================================
    THE QUEST LOG DESIGN SYSTEM
-   Theme: High-Contrast "Pasture" Green
-   Version: 2.1 (Streamlined Management Update)
-   Updated: May 2026
+   Theme: Low-Contrast "Muted Obsidian" Dark Mode
+   Version: 3.0 (Migraine-Safe Performance Architecture)
+   Updated: July 2026
 ================================================================ 
 */
 
-/* --- 1. GLOBAL TOKENS & VARIABLES --- */
+/* --- 1. GLOBAL TOKENS & DESIGN SYSTEM VARIABLES --- */
 :root {
-    /* Color Palette */
-    --bg-color: #f0fdf4;        /* Soft green wash */
-    --primary-green: #166534;   /* Deep forest for text/accents */
-    --border-color: #dcfce7;    /* Light mint for dividers */
-    --card-bg: #ffffff;
-    --text-secondary: #666666;
-    --danger-red: #dc2626;      /* Bad Brain / Delete actions */
-    --xp-gold: #ca8a04;         /* Reward highlights */
+    /* Main Color Space Surfaces */
+    --bg-color: #12161F;          /* Deep midnight canvas - light absorbing */
+    --card-bg: #1E2533;           /* Muted slate card surface */
+    --border-color: #2D3748;      /* Low-contrast divider boundary */
+    
+    /* Typography Contrasts */
+    --text-primary: #E2E8F0;      /* Soft ash white to prevent text vibration */
+    --text-secondary: #A0AEC0;    /* Dimmed stone hue for structural details */
+    
+    /* Accents & Rewards */
+    --primary-accent: #9F7AEA;    /* Soft lavender for interaction links */
+    --xp-gold: #D69E2E;           /* Antiqued gold for reward metrics */
+    --momentum-red: #E53E3E;      /* Low-saturation coral for triage indicators */
+    --success-green: #38A169;     /* Deep jade tint for resolution blocks */
 
-    /* Layout Tokens */
+    /* Layout Geometry Configuration */
     --container-max: 800px;
     --radius-lg: 12px;
     --radius-md: 8px;
@@ -28,16 +34,17 @@
     box-sizing: border-box;
 }
 
-
-/* --- 2. BASE ARCHITECTURE --- */
+/* --- 2. BASE PLATFORM ARCHITECTURE --- */
 body { 
-    font-family: system-ui, -apple-system, sans-serif; 
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
     background-color: var(--bg-color); 
-    color: #111;
+    color: var(--text-primary);
     margin: 0; 
     display: flex; 
     flex-direction: column; 
-    min-height: 100vh; /* Ensures footer stays at bottom */
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
 }
 
 .container { 
@@ -51,21 +58,14 @@ main {
     padding: 2rem 1rem; 
 }
 
-/* --- 3. NAVIGATION & FOOTER --- */
+/* --- 3. SYSTEM NAVIGATION & FOOTER MATRIX --- */
 nav {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
     justify-content: center; 
-    padding: 1rem;
-}
-
-nav a {
-    white-space: nowrap;
-    padding: 0.5rem 0.75rem;
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    font-size: 0.9rem;
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .nav-flex { 
@@ -75,249 +75,303 @@ nav a {
 }
 
 .nav-links a { 
-    margin-left: 1rem; 
+    margin-left: 1.25rem; 
     text-decoration: none; 
-    color: var(--primary-green); 
-    font-weight: bold;
+    color: var(--primary-accent); 
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.15s ease;
+}
+
+.nav-links a:hover {
+    color: var(--text-primary);
 }
 
 footer { 
     text-align: center; 
-    padding: 1rem; 
+    padding: 1.5rem; 
     font-size: 0.8rem; 
     color: var(--text-secondary); 
-    background: white; 
+    background: #0D1117; 
+    border-top: 1px solid var(--border-color);
 }
 
-/* --- 4. THE PASTURE (DASHBOARD) --- */
-.pasture-header {
+/* --- 4. THE BOUNTY BOARD INTERFACE --- */
+.bounty-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
 }
 
-/* Displayed when all tasks are done (Zero-Inbox state) */
-.empty-state {
-    text-align: center;
-    padding: 3rem;
-    background: white;
-    border: 2px dashed #bbf7d0;
-    border-radius: var(--radius-lg);
+.bounty-header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
 }
 
-/* --- 5. QUEST COMPONENT LIBRARY --- */
+/* Zero-Inbox Motivation State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--card-bg);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+}
+
+/* --- 5. COMPONENT MATRIX: QUEST CARDS --- */
 .quest-card {
-    background: white;
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 1rem 1.5rem;
+    padding: 1.2rem 1.5rem;
     margin-bottom: 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.quest-card:hover {
+    border-color: #4A5568;
 }
 
 .quest-accent-bar {
-    width: 6px;
-    height: 40px;
-    border-radius: 3px;
-    margin-right: 1rem;
-    background-color: var(--dynamic-cat-color); 
+    width: 4px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    margin-right: 1.2rem;
+    background-color: var(--dynamic-cat-color, var(--primary-accent)); 
 }
 
-.quest-title { margin: 0; font-size: 1.1rem; color: #111; }
+.quest-info-container {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.quest-title { 
+    margin: 0; 
+    font-size: 1.1rem; 
+    font-weight: 600;
+    color: var(--text-primary); 
+}
 
 .quest-meta {
     font-size: 0.85rem; 
     color: var(--text-secondary);
-    margin-top: 4px; 
+    margin-top: 6px; 
 }
 
 .quest-type-label {
     font-style: italic;
-    margin-left: 2px;
-    opacity: 0.8;
+    margin-left: 4px;
+    color: var(--text-secondary);
 }
 
-/* Status: Handled/Completed State */
+/* Lifecycle State: Resolved / Completed View */
 .quest-done {
-    opacity: 0.6;
-    background-color: #f9fafb;
+    opacity: 0.4;
+    background-color: #1A202C;
     border-style: dashed;
-    filter: grayscale(0.4);
+    filter: grayscale(0.6);
     pointer-events: none;
 }
 
-/* --- 6. BADGES & TAGS --- */
+/* --- 6. ATOMIC VISUAL BADGES & REWARDS --- */
 .badge-done {
-    background: #dcfce7;
-    color: var(--primary-green);
+    background: rgba(56, 161, 105, 0.2);
+    color: #48BB78;
     font-size: 0.7rem;
-    font-weight: bold;
-    padding: 2px 8px;
+    font-weight: 700;
+    padding: 3px 8px;
     border-radius: 12px;
     margin-left: 10px;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .badge-must {
-    background: #fee2e2;
-    color: #991b1b;
+    background: rgba(229, 62, 62, 0.15);
+    color: #FEB2B2;
     font-size: 0.7rem;
-    font-weight: bold;
-    padding: 2px 6px;
+    font-weight: 700;
+    padding: 3px 6px;
     border-radius: var(--radius-sm);
     text-transform: uppercase;
     margin-left: 8px;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(229, 62, 62, 0.3);
 }
 
 .status-tag {
     font-size: 0.75rem;
-    font-weight: bold;
+    font-weight: 700;
     text-transform: uppercase;
     padding: 2px 8px;
     border-radius: 12px;
+    letter-spacing: 0.05em;
 }
 
-.status-active { background-color: #fef9c3; color: #854d0e; }
-.status-done { background-color: #dcfce7; color: #166534; }
+.status-active { background-color: rgba(214, 158, 46, 0.15); color: #F6AD55; }
+.status-done { background-color: rgba(56, 161, 105, 0.15); color: #48BB78; }
 
-.xp-text { color: var(--xp-gold); font-weight: bold; text-align: center;}
+.xp-text { 
+    color: var(--xp-gold); 
+    font-weight: 700; 
+    font-size: 1.05rem;
+}
 
-/* --- 7. FORMS & DATA ENTRY --- */
+/* --- 7. FORMS & DATA INGESTION LAYOUTS --- */
 .form-container {
-    background: white;
+    background: var(--card-bg);
     padding: 2rem;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 }
 
 .form-group { margin-bottom: 1.5rem; }
 
 label { 
     display: block; 
-    font-weight: bold; 
-    margin-bottom: 0.5rem; 
-    color: var(--primary-green); 
+    font-weight: 600; 
+    margin-bottom: 0.6rem; 
+    color: var(--text-primary); 
 }
 
 input, select, textarea {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #ddd;
+    background-color: #12161F;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 1rem; 
+    color: var(--text-primary);
     box-sizing: border-box;
+    transition: border-color 0.15s ease;
 }
 
-/* Specialized wrapper for Checkbox/Label pairs */
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary-accent);
+}
+
 .checkbox-label-wrapper {
     display: flex; 
     align-items: center; 
-    gap: 10px; 
-    margin: 15px 0; 
+    gap: 12px; 
+    margin: 1.25rem 0; 
     cursor: pointer; 
 }
 
 .checkbox-label-wrapper input {
-    width: 20px; 
-    height: 20px; 
+    width: 18px; 
+    height: 18px; 
     margin: 0; 
-    cursor: pointer; 
+    accent-color: var(--primary-accent);
 }
 
-/* --- 8. BUTTONS & INTERACTION --- */
+/* --- 8. BUTTONS & ACTIVE USER INTERACTION --- */
 .submit-btn, .complete-btn {
-    background: var(--primary-green);
-    color: white;
+    background: var(--primary-accent);
+    color: #12161F;
     border: none;
-    padding: 0.6rem 1.2rem;
+    padding: 0.6rem 1.4rem;
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-weight: bold;
-    transition: transform 0.1s, opacity 0.2s;
+    font-weight: 700;
+    transition: transform 0.1s ease, opacity 0.15s ease;
 }
 
 .submit-btn { width: 100%; padding: 1rem; font-size: 1.1rem; }
-.submit-btn:hover, .complete-btn:hover { opacity: 0.9; transform: scale(1.02); }
+.submit-btn:hover, .complete-btn:hover { opacity: 0.9; transform: scale(1.01); }
 
-/* Bad Brain Day Toggle */
-.bad-brain-btn {
-    background: #fef2f2;
-    color: var(--danger-red);
-    border: 1px solid #fecaca;
-    padding: 0.5rem 1rem;
+/* Momentum Mode Control / Filter Button */
+.momentum-btn {
+    background: #1E2533;
+    color: var(--momentum-red);
+    border: 1px solid rgba(229, 62, 62, 0.4);
+    padding: 0.5rem 1.2rem;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
     transition: all 0.2s ease;
 }
-.bad-brain-btn:hover { background: #fee2e2; }
-
-.bad-brain-btn.active-mode {
-    background-color: #3498DB !important;
-    color: #ffffff !important;
-    border-color: #2980B9 !important;
-}
-.bad-brain-btn.active-mode:hover {
-    background-color: #2980B9 !important;
+.momentum-btn:hover { 
+    background: rgba(229, 62, 62, 0.1); 
 }
 
-/* --- 9. THE WEEKLY CORRAL DASHBOARD --- */
+/* Active Filtration State */
+.momentum-btn.active-mode {
+    background-color: #3182CE !important;
+    color: #FFFFFF !important;
+    border-color: #2B6CB0 !important;
+    box-shadow: 0 0 12px rgba(49, 130, 206, 0.3);
+}
+
+.momentum-btn.active-mode:hover {
+    background-color: #2B6CB0 !important;
+}
+
+/* --- 9. THE CHRONICLE LEDGER REVIEW --- */
 .metrics-grid {
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-    gap: 1rem; 
+    gap: 1.25rem; 
     margin-bottom: 2rem;
 }
 
 .metric-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.75rem; 
+    display: flex;
+    flex-direction: column;
     justify-content: center; 
     text-align: center; 
-    padding: 1.5rem; 
-    flex-direction: column;
 }
 
 .metric-label {
-    font-size: 0.85rem; 
+    font-size: 0.8rem; 
     text-transform: uppercase; 
-    letter-spacing: 0.05em; 
+    letter-spacing: 0.08em; 
     color: var(--text-secondary); 
-    font-weight: bold; 
-    margin-bottom: 0.5rem;
+    font-weight: 700; 
+    margin-bottom: 0.75rem;
 }
 
 .metric-val-blue {
-    font-size: 2.5rem; 
-    font-weight: bold; 
-    color: #3182ce;
+    font-size: 2.75rem; 
+    font-weight: 700; 
+    color: #63B3ED;
 }
 
 .metric-val-green {
-    font-size: 2.5rem; 
-    font-weight: bold; 
-    color: var(--primary-green);
+    font-size: 2.75rem; 
+    font-weight: 700; 
+    color: #48BB78;
 }
 
 .frequency-counter {
-    font-weight: bold; 
-    font-size: 1.3rem; 
+    font-weight: 700; 
+    font-size: 1.2rem; 
     padding: 0.4rem 0.8rem; 
     border-radius: var(--radius-sm); 
     background: var(--bg-color); 
-    color: var(--primary-green); 
+    color: var(--text-primary); 
     border: 1px solid var(--border-color);
 }
 
-/* --- 10. QUEST LOG SETTINGS & TABLES --- */
+/* --- 10. SYSTEM CONFIGURATION & DIALECT MANAGEMENT --- */
 .settings-main-title {
     text-align: center;
-    margin-bottom: 1rem;
-    color: var(--primary-green);
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
 }
 
 .settings-wrapper {
@@ -326,27 +380,30 @@ input, select, textarea {
     gap: 2rem;
 }
 
-.settings-wrapper .form-container {
-    max-width: 100%; 
-    width: 100%;
-}
-
 .settings-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 1rem;
 }
 
-.settings-table th, .settings-table td {
+.settings-table th {
+    font-weight: 700;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
     padding: 12px;
     text-align: left;
+}
+
+.settings-table td {
+    padding: 14px 12px;
     border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
 }
 
 .delete-btn-text {
     background: none;
     border: none;
-    color: var(--danger-red);
+    color: var(--momentum-red);
     cursor: pointer;
     font-weight: 600;
 }
@@ -357,27 +414,26 @@ input, select, textarea {
 
 .category-preview-dot {
     display: inline-block;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     vertical-align: middle;
-    border: 1px solid rgba(0,0,0,0.1); 
+    border: 1px solid rgba(255, 255, 255, 0.2); 
     background-color: var(--dot-color, #ccc); 
 }
 
-/* Layout Utilities */
-.inline-form { display: flex; gap: 10px; align-items: center; }
-.color-picker { width: 60px !important; padding: 2px !important; height: 42px; }
+.inline-form { display: flex; gap: 12px; align-items: center; }
+.color-picker { width: 64px !important; padding: 2px !important; height: 40px; cursor: pointer; }
 .small-btn { width: auto !important; padding: 0.5rem 1.5rem !important; }
 
-/* --- 11. MOBILE RESPONSIVENESS & POLISH --- */
+/* --- 11. LAYOUT MOBILE RESPONSIVENESS CAPABILITIES --- */
 @media (max-width: 600px) {
     nav, .nav-flex, .nav-links {
         display: grid !important;
         grid-template-columns: repeat(4, 1fr);
         gap: 6px;
         width: 100%;
-        padding: 0.5rem 0.5rem; 
+        padding: 0.5rem; 
         box-sizing: border-box;
     }
 
@@ -391,38 +447,38 @@ input, select, textarea {
         border: 1px solid var(--border-color);
         border-radius: var(--radius-sm);
         font-size: 0.75rem;      
-        font-weight: bold;
+        font-weight: 700;
         text-decoration: none;
-        color: var(--primary-green);
-        min-height: 38px;
+        color: var(--primary-accent);
+        min-height: 40px;
+        background: var(--card-bg);
         word-break: break-word; 
     }
 
     main {
-        padding-top: 0.5rem !important;
+        padding-top: 1rem !important;
     }
 
-    .pasture-header {
+    .bounty-header {
         flex-direction: column;
-        gap: 1.5rem;
-        margin: 1rem 0 2.5rem 0;
-        color: var(--primary-green);
+        gap: 1.25rem;
+        margin: 1rem 0 2rem 0;
         text-align: center;
     }
 
-    .bad-brain-btn {
+    .momentum-btn {
         width: 100%;
-        padding: 1.2rem;
-        font-size: 1.2rem;
+        padding: 1.1rem;
+        font-size: 1.1rem;
         display: block;
-        box-shadow: 0 4px 6px rgba(220, 38, 38, 0.1);
+        box-shadow: 0 4px 10px rgba(229, 62, 62, 0.15);
     }
 
     .quest-card {
         flex-direction: column; 
         align-items: stretch; 
-        gap: 1rem; 
-        padding: 1rem; 
+        gap: 1.2rem; 
+        padding: 1.2rem; 
     }
 
     .quest-info-container {
@@ -430,8 +486,8 @@ input, select, textarea {
     }
 
     .quest-title {
-        font-size: 1.2rem;
-        line-height: 1.3;
+        font-size: 1.15rem;
+        line-height: 1.4;
         margin-bottom: 4px;
         white-space: normal; 
         word-wrap: break-word;
@@ -439,17 +495,16 @@ input, select, textarea {
 
     .complete-btn {
         width: 100%;
-        padding: 1rem;
-        font-size: 1rem;
+        padding: 1.1rem;
+        font-size: 1.05rem;
         text-align: center;
-        margin-top: auto; 
     }
 
     .quest-meta {
         display: flex;
         flex-wrap: wrap; 
-        gap: 0.25rem;
-        margin-top: 0.1rem;
+        gap: 0.4rem;
+        margin-top: 0.2rem;
     }
 
     .quest-meta span:first-child {

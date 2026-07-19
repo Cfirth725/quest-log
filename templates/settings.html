@@ -1,112 +1,120 @@
 {{ define "content" }}
 <div class="container settings-wrapper">
-    <h2 class="settings-main-title">Quest Log Settings</h2>
+    <h2 class="settings-main-title" style="color: var(--text-primary);">System Configurations</h2>
 
     <section class="form-container">
-        <h3>Forge New Category</h3>
+        <h3 style="margin-top: 0; color: var(--text-primary);">Forge New Category</h3>
         <form action="/categories/create" method="POST" class="inline-form">
-            <input type="text" name="name" placeholder="Category Name..." required>
-            <input type="color" name="color" value="#4f46e5" class="color-picker">
+            <input type="text" name="name" placeholder="Category Name..." required style="flex-grow: 1;">
+            <input type="color" name="color" value="#9F7AEA" class="color-picker" title="Select Category Signature Color">
             <button type="submit" class="submit-btn small-btn">Add</button>
         </form>
     </section>
 
     <section class="form-container">
-        <h3>Existing Category Management</h3>
-        <table class="settings-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Color Preview</th>
-                    <th>Delete</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{ range .Categories }}
-                <tr>
-                    <td><strong>{{ .Name }}</strong></td>
-                    <td>
-                        <span class="category-preview-dot" style="--dot-color: {{ .ColorHex }};"></span>
-                        <code>{{ .ColorHex }}</code>
-                    </td>
-                    <td>
-                        <form action="/categories/delete" method="POST" onsubmit="return confirm('Really delete {{ .Name }}?')">
-                            <input type="hidden" name="category_id" value="{{ .ID }}">
-                            <button type="submit" class="delete-btn-text">🗑️ Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                {{ end }}
-            </tbody>
-        </table>
-    </section>
-
-    <section class="form-container">
-        <h3>⚔️ Repeatable Quests Management</h3>
-        <table class="settings-table">
-            <thead>
-                <tr>
-                    <th>Title of Quest</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Switch</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{ range .Quests }}
-                    {{ if ne .QuestType "One-Time" }} 
+        <h3 style="margin-top: 0; color: var(--text-primary);">Existing Category Management</h3>
+        <div style="overflow-x: auto;">
+            <table class="settings-table">
+                <thead>
                     <tr>
-                        <td><strong>{{ .Title }}</strong></td>
-                        <td><span class="badge">{{ .QuestType }}</span></td>
+                        <th>Name</th>
+                        <th>Color Preview</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Categories }}
+                    <tr>
+                        <td><strong style="color: var(--text-primary);">{{ .Name }}</strong></td>
                         <td>
-                        <span class="status-tag {{ if eq .Status "Completed" }}status-done{{ else }}status-active{{ end }}">
-                            {{ .Status }}
-                        </span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="category-preview-dot" style="--dot-color: {{ .ColorHex }};"></span>
+                                <code style="color: var(--text-secondary); background: #12161F; padding: 2px 6px; border-radius: 4px;">{{ .ColorHex }}</code>
+                            </div>
                         </td>
                         <td>
-                            <form action="/settings/downgrade/" method="POST">
-                                <input type="hidden" name="id" value="{{ .ID }}">
-                                <button type="submit" class="delete-btn-text">Make One-Time</button>
+                            <form action="/categories/delete" method="POST" onsubmit="return confirm('Really delete {{ .Name }}?')">
+                                <input type="hidden" name="category_id" value="{{ .ID }}">
+                                <button type="submit" class="delete-btn-text">🗑️ Delete</button>
                             </form>
                         </td>
                     </tr>
                     {{ end }}
-                {{ end }}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <section class="form-container">
-        <h3>⚔️ Active Quests Management</h3>
-        <table class="settings-table">
-            <thead>
-                <tr>
-                    <th>Title of Quest</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Retire</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{ range .Quests }}
-                <tr>
-                    <td><strong>{{ .Title }}</strong></td>
-                    <td><span class="badge">{{ .QuestType }}</span></td>
-                    <td>
-                        <span class="status-tag {{ if eq .Status "Completed" }}status-done{{ else }}status-active{{ end }}">
-                            {{ .Status }}
-                        </span>
-                    </td>
-                    <td>
-                        <form action="/settings/archive" method="POST">
-                            <input type="hidden" name="id" value="{{ .ID }}">
-                            <button type="submit" class="delete-btn-text">Archive</button>
-                        </form>
-                    </td>
-                </tr>
-                {{ end }}
-            </tbody>
-        </table>
+        <h3 style="margin-top: 0; color: var(--text-primary);">⚔️ Repeatable Quests Management</h3>
+        <div style="overflow-x: auto;">
+            <table class="settings-table">
+                <thead>
+                    <tr>
+                        <th>Title of Quest</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Switch</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Quests }}
+                        {{ if ne .QuestType "One-Time" }} 
+                        <tr>
+                            <td><strong style="color: var(--text-primary);">{{ .Title }}</strong></td>
+                            <td><span class="status-tag status-active" style="background-color: rgba(159, 122, 234, 0.15); color: #B794F4;">{{ .QuestType }}</span></td>
+                            <td>
+                                <span class="status-tag {{ if eq .Status "Completed" }}status-done{{ else }}status-active{{ end }}">
+                                    {{ .Status }}
+                                </span>
+                            </td>
+                            <td>
+                                <form action="/settings/downgrade/" method="POST">
+                                    <input type="hidden" name="id" value="{{ .ID }}">
+                                    <button type="submit" class="delete-btn-text" style="color: var(--primary-accent);">Make One-Time</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{ end }}
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="form-container">
+        <h3 style="margin-top: 0; color: var(--text-primary);">⚔️ Active Quests Management</h3>
+        <div style="overflow-x: auto;">
+            <table class="settings-table">
+                <thead>
+                    <tr>
+                        <th>Title of Quest</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Retire</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Quests }}
+                    <tr>
+                        <td><strong style="color: var(--text-primary);">{{ .Title }}</strong></td>
+                        <td><span class="status-tag status-active" style="background-color: rgba(159, 122, 234, 0.1) !important; color: #B794F4 !important; border: 1px solid rgba(159, 122, 234, 0.2);">{{ .QuestType }}</span></td>
+                        <td>
+                            <span class="status-tag {{ if eq .Status "Completed" }}status-done{{ else }}status-active{{ end }}">
+                                {{ .Status }}
+                            </span>
+                        </td>
+                        <td>
+                            <form action="/settings/archive" method="POST">
+                                <input type="hidden" name="id" value="{{ .ID }}">
+                                <button type="submit" class="delete-btn-text">Archive</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
     </section>
 </div>
 {{ end }}

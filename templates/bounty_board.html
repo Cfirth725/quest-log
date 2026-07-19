@@ -1,0 +1,30 @@
+{{ define "content" }}
+<div class="bounty-header">
+    <div>
+        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary);">Today's Contracts</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+            Manage your active targets and secure completion telemetry for The Chronicle.
+        </p>
+    </div>
+
+    <a href="/?momentum={{if .MomentumMode}}false{{else}}true{{end}}" style="text-decoration: none;">
+        <button class="momentum-btn {{if .MomentumMode}}active-mode{{end}}">
+            {{if .MomentumMode}}🛡️ Normal Operations{{else}}⚡ Momentum Mode{{end}}
+        </button>
+    </a>
+</div>
+
+<div class="quest-list">
+    {{ range .Quests }}
+        {{ template "quest_card" . }}
+    {{ else }}
+        <div class="empty-state">
+            <span style="font-size: 3rem;" role="img" aria-label="Clear skies over the matrix">✨</span>
+            <h3 style="margin: 1rem 0 0.5rem 0; color: var(--text-primary);">The Board is Completely Clear</h3>
+            <p style="color: var(--text-secondary); margin: 0; font-style: italic;">
+                All active contracts have been resolved. Rest up or head to The Forge to mint new objectives.
+            </p>
+        </div>
+    {{ end }}
+</div>
+{{ end }}
