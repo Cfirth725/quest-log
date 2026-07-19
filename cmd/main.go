@@ -85,7 +85,7 @@ func main() {
 	mux.HandleFunc("POST /categories/create", web.HandleCreateCategory)
 	mux.HandleFunc("POST /categories/delete", web.HandleDeleteCategory)
 	mux.HandleFunc("POST /settings/archive", web.ArchiveQuestHandler)
-	mux.HandleFunc("POST /settings/downgrade/", web.DowngradeQuestHandler)
+	mux.HandleFunc("POST /settings/downgrade", web.DowngradeQuestHandler)
 
 	log.Println("[OK] Inbound web traffic pathways successfully mapped to router multiplexer")
 

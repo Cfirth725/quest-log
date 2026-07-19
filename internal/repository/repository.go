@@ -36,9 +36,9 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int, momentumMode b
 		  )
 		ORDER BY 
 			CASE WHEN q.status = 'active' THEN 0 ELSE 1 END ASC,
-			category_name ASC,
-			q.is_non_negotiable DESC,
-			q.created_at ASC;
+    		COALESCE(c.name, 'Uncategorized') ASC,
+    		q.is_non_negotiable DESC,
+    		q.created_at ASC;
 	`, momentumFilter)
 
 	rows, err := db.QueryContext(ctx, query, userID)
@@ -79,7 +79,7 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 	var currentStatus string
 	var baseXP int
 
-	err = tx.QueryRowContext(ctx, "SELECT status, base_xp FROM quests WHERE id = ? FOR UPDATE", questID).Scan(&currentStatus, &baseXP)
+	err = tx.QueryRowContext(ctx, "SELECT status, base_xp FROM quests WHERE id = ?", questID).Scan(&currentStatus, &baseXP)
 	if err != nil {
 		return fmt.Errorf("dao safety check block: verification query failed: %w", err)
 	}

@@ -107,7 +107,7 @@ func OptimizeDatabase(ctx context.Context, db *sql.DB) {
 	// ----- PHASE 1: Telemetry Phase -----
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = "data/quests.db"
+		dbPath = "./data/quests.db"
 	}
 
 	preInfo, err := os.Stat(dbPath)
