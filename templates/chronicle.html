@@ -1,13 +1,13 @@
 {{ define "content" }}
 <div class="container">
     <div class="bounty-header">
-        <h1>📜 The Chronicle</h1>
+        <h1>📜 The Weekly Chronicle</h1>
         <div class="xp-text" style="font-size: 1.5rem;">Total: {{ .TotalXP }} XP</div>
     </div>
 
     <div class="empty-state" style="margin-bottom: 2rem; border-style: solid;">
         <h2 style="margin:0; color: var(--text-primary);">You've conquered {{ .QuestCount }} bounties this week!</h2>
-        <p>Incredible effort! All your hard-earned progress is recorded.</p>
+        <p>Incredible effort Adventurer! All your hard-earned progress has been recorded.</p>
     </div>
 
     <div class="metrics-grid">
@@ -62,7 +62,7 @@
     </div>
     {{ else }}
     <div class="empty-state" style="padding: 2rem;">
-        <p style="margin: 0; color: var(--text-secondary); font-style: italic;">No active completions logged on this shard matrix yet.</p>
+        <p style="margin: 0; color: var(--text-secondary); font-style: italic;">No active completions logged yet... Get Questing Adventurer!</p>
     </div>
     {{ end }}
 </div>
