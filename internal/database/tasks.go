@@ -48,7 +48,7 @@ func RunMasterSpawner(db *sql.DB) {
 // ====================================================================
 
 // processDailies reactivates 'Daily' tasks that have not been completed
-// within the current daily boundary (resetting at 04:00 local time).
+// within the current daily boundary (resetting strictly at 04:00 AM EDT).
 func processDailies(db *sql.DB) (int, error) {
 	query := `
 		UPDATE quests 
@@ -57,7 +57,7 @@ func processDailies(db *sql.DB) (int, error) {
 		  AND status != 'active'
 		  AND id NOT IN (
 			  SELECT quest_id FROM quest_completions 
-			  WHERE completed_at > datetime('now', '-4 hours', 'start of day', '+4 hours', 'localtime')
+			  WHERE completed_at >= datetime('now', '-4 hours', 'start of day', '+4 hours')
 		  );`
 
 	result, err := db.Exec(query)
@@ -69,7 +69,7 @@ func processDailies(db *sql.DB) (int, error) {
 }
 
 // processIntervals evaluates 'Repeating' tasks against their specific
-// recurrence windows using fractional Julian Day conversions.
+// recurrence windows using integer day differences.
 func processIntervals(db *sql.DB) (int, error) {
 	query := `
 		UPDATE quests 
@@ -78,10 +78,10 @@ func processIntervals(db *sql.DB) (int, error) {
 		  AND status != 'active'
 		  AND last_completed_at IS NOT NULL
 		  AND (
-			CAST(
+			ROUND(
 				julianday('now', '-4 hours', 'start of day') - 
-				julianday(last_completed_at, '-4 hours', 'start of day') 
-			AS INTEGER)
+				julianday(datetime(last_completed_at, '-4 hours'), 'start of day')
+			)
 		  ) >= repeat_interval_days;`
 
 	result, err := db.Exec(query)
@@ -92,8 +92,10 @@ func processIntervals(db *sql.DB) (int, error) {
 	return int(rows), nil
 }
 
-// processWeeklies handles tasks that reset once a week on a specific target day.
+// / processWeeklies handles tasks that reset once a week on their specified reset_day_of_week.
 func processWeeklies(db *sql.DB) (int, error) {
+	// 1. Matches today's day of the week (0 = Sunday, 1 = Monday, 2 = Tuesday, etc.)
+	// 2. Ensures the quest hasn't already been completed in the last 6 days.
 	query := `
 		UPDATE quests 
 		SET status = 'active' 
@@ -102,7 +104,7 @@ func processWeeklies(db *sql.DB) (int, error) {
 		  AND CAST(strftime('%w', 'now', '-4 hours') AS INTEGER) = reset_day_of_week
 		  AND id NOT IN (
 			  SELECT quest_id FROM quest_completions 
-			  WHERE strftime('%Y-%W', completed_at, '-4 hours') = strftime('%Y-%W', 'now', '-4 hours')
+			  WHERE completed_at >= datetime('now', '-4 hours', '-6 days')
 		  );`
 
 	result, err := db.Exec(query)
