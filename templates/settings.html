@@ -64,7 +64,7 @@
                             <td><strong style="color: var(--text-primary);">{{ .Title }}</strong></td>
                             <td><span class="status-tag status-active" style="background-color: rgba(159, 122, 234, 0.15); color: #B794F4;">{{ .QuestType }}</span></td>
                             <td>
-                                <span class="status-tag {{ if eq .Status "Completed" }}status-done{{ else }}status-active{{ end }}">
+                                <span class="status-tag {{ if eq .Status "completed" }}status-done{{ else }}status-active{{ end }}">
                                     {{ .Status }}
                                 </span>
                             </td>
@@ -100,7 +100,7 @@
                         <td><strong style="color: var(--text-primary);">{{ .Title }}</strong></td>
                         <td><span class="status-tag status-active" style="background-color: rgba(159, 122, 234, 0.1) !important; color: #B794F4 !important; border: 1px solid rgba(159, 122, 234, 0.2);">{{ .QuestType }}</span></td>
                         <td>
-                            <span class="status-tag {{ if eq .Status "Completed" }}status-done{{ else }}status-active{{ end }}">
+                            <span class="status-tag {{ if eq .Status "completed" }}status-done{{ else }}status-active{{ end }}">
                                 {{ .Status }}
                             </span>
                         </td>

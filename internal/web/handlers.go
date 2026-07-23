@@ -65,13 +65,12 @@ func HandleCreateQuest(w http.ResponseWriter, r *http.Request) {
 
 	title := r.FormValue("title")
 	categoryID, _ := strconv.Atoi(r.FormValue("category_id"))
-	difficultyStr := r.FormValue("difficulty") // 1. Read raw string token
+	difficultyStr := r.FormValue("difficulty")
 	ownerID, _ := strconv.Atoi(r.FormValue("owner_id"))
 	questType := r.FormValue("quest_type")
 	intervalStr := r.FormValue("repeat_interval_days")
 	resetDayStr := r.FormValue("reset_day_of_week")
 
-	// 2. Convert difficulty token to an integer safely
 	difficulty, err := strconv.Atoi(difficultyStr)
 	if err != nil {
 		log.Printf("[ERROR] Validation rejection: invalid difficulty format payload: %s", difficultyStr)
@@ -131,7 +130,6 @@ func HandleCreateQuest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Defensive DAO Abstraction: Relocate direct DB actions completely
 	err = repository.CreateQuest(ctx, database.DB, cleanTitle, categoryID, difficulty, calculatedXP, isNonNegotiable, ownerID, questType, interval, resetDayOfWeek)
 	if err != nil {
 		log.Printf("[ERROR] Ingestion breakdown inserting quest to ledger: %v", err)
@@ -157,8 +155,10 @@ func HandleCompleteQuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Complete via transaction wrapper inside the DAO layer
-	if err := repository.CompleteQuest(ctx, database.DB, questID, 1); err != nil {
+	// Default to User ID 1 until multi-user UI interface is implemented
+	userID := 1
+
+	if err := repository.CompleteQuest(ctx, database.DB, questID, userID); err != nil {
 		log.Printf("[ERROR] Relational database breakdown finalizing transaction state: %v", err)
 		http.Error(w, "Could not finalize quest completion status", http.StatusInternalServerError)
 		return
@@ -197,6 +197,11 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 
 // HandleCreateCategory processes requests to establish new taxonomies.
 func HandleCreateCategory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/settings", http.StatusSeeOther)
+		return
+	}
+
 	ctx := r.Context()
 	name := strings.TrimSpace(r.FormValue("name"))
 	color := r.FormValue("color")
@@ -218,6 +223,11 @@ func HandleCreateCategory(w http.ResponseWriter, r *http.Request) {
 
 // HandleDeleteCategory drops a category if no dependency checks fail.
 func HandleDeleteCategory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/settings", http.StatusSeeOther)
+		return
+	}
+
 	ctx := r.Context()
 	id := r.FormValue("category_id")
 

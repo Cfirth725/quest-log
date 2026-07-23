@@ -15,8 +15,13 @@ import (
 
 // ViewBountyBoardHandler coordinates the retrieval of active tasks and manages the
 // dashboard's display state. It supports a 'Momentum Mode' filter to assist
-// with cognitive load management during high-pressure barometric events.
+// with cognitive load management during high-pressure events.
 func ViewBountyBoardHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	ctx := r.Context()
 	momentumMode := r.URL.Query().Get("momentum") == "true"
 
@@ -47,9 +52,14 @@ func ViewBountyBoardHandler(w http.ResponseWriter, r *http.Request) {
 
 // HandleViewChronicle renders the historical reporting dashboard and weekly summaries.
 func HandleViewChronicle(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	ctx := r.Context()
 
-	// Gather the core itemized rolling 7-day victory log
+	// Gather the core itemized rolling victory log since Sunday EDT
 	summary, err := repository.GetWeeklySummary(ctx, database.DB, 1)
 	if err != nil {
 		log.Printf("[ERROR] Scribe engine summary parser failure: %v", err)

@@ -48,6 +48,11 @@ func Connect(ctx context.Context) (*sql.DB, error) {
 		return nil, fmt.Errorf("database infrastructure failure: open sequence aborted: %w", err)
 	}
 
+	// Prevent lock contention by limiting single-writer connection pool
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	db.SetConnMaxLifetime(0)
+
 	// Verify the physical file handle is reachable using a context-aware ping
 	if err := db.PingContext(ctx); err != nil {
 		return nil, fmt.Errorf("database connectivity check failed: hardware node unreachable: %w", err)
@@ -86,11 +91,12 @@ func createTables(ctx context.Context, db *sql.DB) error {
 // ====================================================================
 
 // OptimizeDatabase captures physical file allocations, executes a context-aware
-// VACUUM compaction loop, and flushes historical data records out of live indices.
+// VACUUM compaction loop, and flushes unused page allocations.
 func OptimizeDatabase(ctx context.Context, db *sql.DB) {
 	log.Println("[IDLE] Storage Maintenance: Commencing engine hygiene optimization sweep...")
 
 	// ----- PHASE 0: Data Pruning Ledger -----
+	// Retains 14 days of completions for Chronicle views while keeping the database lean
 	cutoff := time.Now().AddDate(0, 0, -14).Format("2006-01-02 15:04:05")
 
 	pruneQuery := `DELETE FROM quest_completions WHERE completed_at < ?;`

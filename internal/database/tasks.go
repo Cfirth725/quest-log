@@ -3,8 +3,11 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"log"
+
+	"quest-log/internal/repository"
 )
 
 // ====================================================================
@@ -15,6 +18,7 @@ import (
 // constraints and systematically reactivates them for the upcoming daily cycle.
 func RunMasterSpawner(db *sql.DB) {
 	log.Println("[INIT] Starting Master Spawner background automation loop...")
+	ctx := context.Background()
 
 	// 1. Daily tasks check
 	dailies, err := processDailies(db)
@@ -32,7 +36,19 @@ func RunMasterSpawner(db *sql.DB) {
 		log.Printf("[OK] Master Spawner successfully reactivated %d Interval contracts", intervals)
 	}
 
-	// 3. Weekly tasks check
+	// 3. Sunday Check: Archiving One-Time Quests before Weekly Resets
+	var dayOfWeek int
+	err = db.QueryRow("SELECT CAST(strftime('%w', 'now', '-4 hours') AS INTEGER)").Scan(&dayOfWeek)
+	if err == nil && dayOfWeek == 0 { // 0 = Sunday
+		archivedCount, err := repository.ChronicleCompletedQuests(ctx, db)
+		if err != nil {
+			log.Printf("[ERROR] Master Spawner exception executing Sunday Chronicle Archiving: %v", err)
+		} else {
+			log.Printf("[OK] Master Spawner archived %d completed One-Time quests for the new week", archivedCount)
+		}
+	}
+
+	// 4. Weekly tasks check
 	weeklies, err := processWeeklies(db)
 	if err != nil {
 		log.Printf("[ERROR] Master Spawner exception handling Weekly quest matrix: %v", err)
@@ -54,7 +70,7 @@ func processDailies(db *sql.DB) (int, error) {
 		UPDATE quests 
 		SET status = 'active' 
 		WHERE quest_type = 'Daily' 
-		  AND status != 'active'
+		  AND LOWER(status) != 'active'
 		  AND id NOT IN (
 			  SELECT quest_id FROM quest_completions 
 			  WHERE completed_at >= datetime('now', '-4 hours', 'start of day', '+4 hours')
@@ -75,7 +91,7 @@ func processIntervals(db *sql.DB) (int, error) {
 		UPDATE quests 
 		SET status = 'active' 
 		WHERE quest_type = 'Repeating' 
-		  AND status != 'active'
+		  AND LOWER(status) != 'active'
 		  AND last_completed_at IS NOT NULL
 		  AND (
 			ROUND(
@@ -92,15 +108,13 @@ func processIntervals(db *sql.DB) (int, error) {
 	return int(rows), nil
 }
 
-// / processWeeklies handles tasks that reset once a week on their specified reset_day_of_week.
+// processWeeklies handles tasks that reset once a week on their specified reset_day_of_week.
 func processWeeklies(db *sql.DB) (int, error) {
-	// 1. Matches today's day of the week (0 = Sunday, 1 = Monday, 2 = Tuesday, etc.)
-	// 2. Ensures the quest hasn't already been completed in the last 6 days.
 	query := `
 		UPDATE quests 
 		SET status = 'active' 
 		WHERE quest_type = 'Weekly' 
-		  AND status != 'active'
+		  AND LOWER(status) != 'active'
 		  AND CAST(strftime('%w', 'now', '-4 hours') AS INTEGER) = reset_day_of_week
 		  AND id NOT IN (
 			  SELECT quest_id FROM quest_completions 

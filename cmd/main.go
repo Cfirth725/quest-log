@@ -74,6 +74,7 @@ func main() {
 	// Dashboard & Telemetry: Primary views for active tasks and historical performance.
 	mux.HandleFunc("GET /", web.ViewBountyBoardHandler)
 	mux.HandleFunc("GET /chronicle", web.HandleViewChronicle)
+	mux.HandleFunc("POST /chronicle/archive", web.HandleChronicleQuests)
 
 	// The Forge: Management endpoints for quest creation and state transitions.
 	mux.HandleFunc("GET /newquest", web.HandleNewQuest)

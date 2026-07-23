@@ -10,6 +10,7 @@
         <p>Incredible effort Adventurer! All your hard-earned progress has been recorded.</p>
     </div>
 
+    {{ if .Report }}
     <div class="metrics-grid">
         <div class="metric-card">
             <div class="metric-label">One-Time Milestones</div>
@@ -21,7 +22,7 @@
         </div>
     </div>
 
-    <h3 style="margin-top: 2rem; color: var(--primary-accent);">Habit Loop Frequency (7-Day Rolling)</h3>
+    <h3 style="margin-top: 2rem; color: var(--primary-accent);">Current Week Habit Loops</h3>
     <div style="margin-bottom: 2rem;">
         {{ range .Report.HabitExecutionLog }}
         <div class="quest-card" style="margin-bottom: 0.5rem; --dynamic-cat-color: #4A5568;">
@@ -40,10 +41,11 @@
         </div>
         {{ else }}
         <div class="empty-state" style="padding: 1.5rem;">
-            <p style="margin: 0; color: var(--text-secondary); font-style: italic;">No recurring loops completed in the last 7 days.</p>
+            <p style="margin: 0; color: var(--text-secondary); font-style: italic;">No recurring loops completed yet this week.</p>
         </div>
         {{ end }}
     </div>
+    {{ end }}
 
     <h3 style="color: var(--primary-accent);">Recent Completions</h3>
     {{ range .RecentWins }}

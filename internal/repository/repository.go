@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -31,14 +32,14 @@ func GetActiveQuests(ctx context.Context, db *sql.DB, userID int, momentumMode b
 		  AND q.deleted_at IS NULL
 		  %s 
 		  AND (
-			q.status = 'active' 
-			OR (q.status = 'Completed' AND q.quest_type = 'One-Time')
+			LOWER(q.status) = 'active' 
+			OR (LOWER(q.status) = 'completed' AND q.quest_type = 'One-Time')
 		  )
 		ORDER BY 
-			CASE WHEN q.status = 'active' THEN 0 ELSE 1 END ASC,
-    		COALESCE(c.name, 'Uncategorized') ASC,
-    		q.is_non_negotiable DESC,
-    		q.created_at ASC;
+			CASE WHEN LOWER(q.status) = 'active' THEN 0 ELSE 1 END ASC,
+			COALESCE(c.name, 'Uncategorized') ASC,
+			q.is_non_negotiable DESC,
+			q.created_at ASC;
 	`, momentumFilter)
 
 	rows, err := db.QueryContext(ctx, query, userID)
@@ -84,7 +85,8 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 		return fmt.Errorf("dao safety check block: verification query failed: %w", err)
 	}
 
-	if currentStatus == "Completed" {
+	// Case-insensitive status guard
+	if strings.EqualFold(currentStatus, "completed") {
 		return nil
 	}
 
@@ -94,7 +96,7 @@ func CompleteQuest(ctx context.Context, db *sql.DB, questID int, completingUserI
 		return fmt.Errorf("dao context block: profile metric retrieval failed: %w", err)
 	}
 
-	_, err = tx.ExecContext(ctx, "UPDATE quests SET status = 'Completed', last_completed_at = DATETIME('now', 'localtime') WHERE id = ?", questID)
+	_, err = tx.ExecContext(ctx, "UPDATE quests SET status = 'completed', last_completed_at = CURRENT_TIMESTAMP WHERE id = ?", questID)
 	if err != nil {
 		return fmt.Errorf("dao modification error: quest state write aborted: %w", err)
 	}
@@ -133,10 +135,10 @@ func CreateQuest(ctx context.Context, db *sql.DB, title string, categoryID int, 
 func ChronicleCompletedQuests(ctx context.Context, db *sql.DB) (int64, error) {
 	query := `
 		UPDATE quests 
-		SET status = 'Archived' 
-		WHERE status = 'Completed' 
-		AND quest_type = 'One-Time' 
-		AND (owner_id = 1 OR owner_id = 0);`
+		SET status = 'archived' 
+		WHERE LOWER(status) = 'completed' 
+		  AND quest_type = 'One-Time' 
+		  AND (owner_id = 1 OR owner_id = 0);`
 
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
@@ -145,7 +147,7 @@ func ChronicleCompletedQuests(ctx context.Context, db *sql.DB) (int64, error) {
 	return result.RowsAffected()
 }
 
-// GetWeeklySummary queries total XP allocations and aggregates itemized wins.
+// GetWeeklySummary queries total XP allocations and aggregates itemized wins since Sunday EDT.
 func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (ChronicleSummary, error) {
 	var summary ChronicleSummary
 
@@ -155,19 +157,25 @@ func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (ChronicleSum
 			COALESCE(SUM(xp_awarded), 0) 
 		FROM quest_completions 
 		WHERE completed_by_user_id = ? 
-		AND datetime(completed_at) >= datetime('now', '-7 days', 'localtime')`, userID).Scan(&summary.QuestCount, &summary.TotalXP)
+		  AND datetime(completed_at) >= datetime('now', '-4 hours', 'start of week', '+4 hours')`, userID).Scan(&summary.QuestCount, &summary.TotalXP)
 
 	if err != nil {
 		return summary, fmt.Errorf("dao aggregation block: weekly volume compilation failed: %w", err)
 	}
 
+	// Uses LEFT JOIN so tasks without a category still show up!
 	rows, err := db.QueryContext(ctx, `
-		SELECT q.title, c.name, c.color_hex, qc.xp_awarded, qc.completed_at
+		SELECT 
+			q.title, 
+			COALESCE(c.name, 'Uncategorized') AS category_name, 
+			COALESCE(c.color_hex, '#4A5568') AS color_hex, 
+			qc.xp_awarded, 
+			qc.completed_at
 		FROM quest_completions qc
 		JOIN quests q ON qc.quest_id = q.id
-		JOIN categories c ON q.category_id = c.id
+		LEFT JOIN categories c ON q.category_id = c.id
 		WHERE qc.completed_by_user_id = ?
-		AND datetime(qc.completed_at) >= datetime('now', '-7 days', 'localtime')
+		  AND datetime(qc.completed_at) >= datetime('now', '-4 hours', 'start of week', '+4 hours')
 		ORDER BY qc.completed_at DESC`, userID)
 
 	if err != nil {
@@ -200,7 +208,7 @@ func GenerateWeeklyChronicleReport(ctx context.Context, db *sql.DB) (*Operationa
 			COUNT(CASE WHEN q.quest_type != 'One-Time' THEN 1 END) as recurring_count
 		FROM quest_completions qc
 		JOIN quests q ON qc.quest_id = q.id
-		WHERE qc.completed_at >= datetime('now', '-7 days', '-4 hours')
+		WHERE qc.completed_at >= datetime('now', '-4 hours', 'start of week', '+4 hours')
 		  AND q.deleted_at IS NULL`
 
 	err := db.QueryRowContext(ctx, splitQuery).Scan(&report.OneTimeCompleted, &report.RecurringCompleted)
@@ -217,7 +225,7 @@ func GenerateWeeklyChronicleReport(ctx context.Context, db *sql.DB) (*Operationa
 		JOIN quests q ON qc.quest_id = q.id
 		LEFT JOIN categories c ON q.category_id = c.id
 		WHERE q.quest_type != 'One-Time'
-		  AND qc.completed_at >= datetime('now', '-7 days', '-4 hours')
+		  AND qc.completed_at >= datetime('now', '-4 hours', 'start of week', '+4 hours')
 		  AND q.deleted_at IS NULL
 		GROUP BY q.title, category_name
 		ORDER BY execution_count DESC, category_name ASC;`
@@ -245,7 +253,7 @@ func GenerateWeeklyChronicleReport(ctx context.Context, db *sql.DB) (*Operationa
 
 // SoftDeleteQuest marks a task record as retired by appending a timestamp token.
 func SoftDeleteQuest(ctx context.Context, db *sql.DB, id int) error {
-	_, err := db.ExecContext(ctx, "UPDATE quests SET deleted_at = datetime('now', 'localtime') WHERE id = ?", id)
+	_, err := db.ExecContext(ctx, "UPDATE quests SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", id)
 	return err
 }
 
