@@ -1,15 +1,17 @@
 {{ define "quest_card" }}
-<div class="quest-card {{ if eq .Status "completed" }}quest-done{{ end }}" style="--dynamic-cat-color: {{ .CategoryColor }};">
+{{ $isDone := or (eq .Status "completed") (eq .Status "Completed") }}
+
+<div class="quest-card {{ if $isDone }}quest-done{{ end }}" style="--dynamic-cat-color: {{ .CategoryColor }};">
     <div class="quest-info-container">
         <div class="quest-accent-bar"></div>
         
         <div>
             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
-                <h3 class="quest-title">{{ .Title }}</h3>
+                <h3 class="quest-title" {{ if $isDone }}style="text-decoration: line-through; opacity: 0.6;"{{ end }}>{{ .Title }}</h3>
                 {{ if .IsNonNegotiable }}
                     <span class="badge-must" title="Priority Shield Active">CRITICAL</span>
                 {{ end }}
-                {{ if eq .Status "completed" }}
+                {{ if $isDone }}
                     <span class="badge-done">RESOLVED</span>
                 {{ end }}
             </div>
@@ -30,11 +32,15 @@
         </div>
     </div>
 
-    {{ if ne .Status "completed" }}
-    <form action="/quests/complete" method="POST" style="margin: 0;">
-        <input type="hidden" name="quest_id" value="{{ .ID }}">
-        <button type="submit" class="complete-btn">Complete</button>
-    </form>
+    {{ if not $isDone }}
+        <form action="/quests/complete" method="POST" style="margin: 0;">
+            <input type="hidden" name="quest_id" value="{{ .ID }}">
+            <button type="submit" class="complete-btn">Complete</button>
+        </form>
+    {{ else }}
+        <div class="completed-token" style="opacity: 0.5; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); padding: 0.4rem 0.8rem; background: rgba(255, 255, 255, 0.05); border-radius: 4px;">
+            ✓ Claimed
+        </div>
     {{ end }}
 </div>
 {{ end }}
