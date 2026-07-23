@@ -23,6 +23,7 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 
 	// 3. The Chronicle (Weekly Review)
 	mux.HandleFunc("GET /chronicle", HandleViewChronicle)
+	mux.HandleFunc("POST /api/v1/quests/analyze", AnalyzeImportAPIHandler)
 	mux.HandleFunc("POST /chronicle/archive", HandleChronicleQuests)
 
 	// 4. The Forge (Quest Creation & Completion)
@@ -39,6 +40,6 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 
 	// Suppress favicon.ico from triggering the catch-all Bounty Board route
 	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-    	w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusNoContent)
 	})
 }

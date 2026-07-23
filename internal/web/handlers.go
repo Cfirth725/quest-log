@@ -335,6 +335,74 @@ func ImportQuestsAPIHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// AnalyzeImportAPIHandler inspects the JSON payload against existing database categories
+// without committing records, flagging any unmapped categories for UI resolution.
+func AnalyzeImportAPIHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to read body"})
+		return
+	}
+	defer r.Body.Close()
+
+	// Parse payload schema
+	extractedQuests, err := ingest.ParseJSONPayload(bodyBytes)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	// Fetch current database categories
+	existingCategories, err := repository.GetCategories(r.Context(), database.DB)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to load database categories"})
+		return
+	}
+
+	// Build lookup set (case-insensitive)
+	existingMap := make(map[string]bool)
+	for _, c := range existingCategories {
+		existingMap[strings.ToLower(c.Name)] = true
+	}
+
+	// Detect missing categories in payload
+	unmatchedSet := make(map[string]bool)
+	var unmatchedList []string
+
+	for _, q := range extractedQuests {
+		catName := strings.TrimSpace(q.CategoryName)
+		if catName == "" {
+			catName = "Uncategorized"
+		}
+
+		lookupKey := strings.ToLower(catName)
+		if !existingMap[lookupKey] && !unmatchedSet[lookupKey] {
+			unmatchedSet[lookupKey] = true
+			unmatchedList = append(unmatchedList, catName)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":               "success",
+		"total_quests":         len(extractedQuests),
+		"unmatched_categories": unmatchedList,
+		"existing_categories":  existingCategories,
+	})
+}
+
 // ====================================================================
 // -- 5. ADMINISTRATIVE & TAXONOMY HANDLERS --
 // ====================================================================
