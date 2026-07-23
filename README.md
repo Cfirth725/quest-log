@@ -41,13 +41,10 @@ Quest Log functions as a modular web application. By replacing traditional time-
 [Ghost Guard Layer]
  │  String whitespace sanitization & structural check gates
  ▼
-[Type Evaluation Fork]
- │
- ├───► (One-Time Bounty) ──► Insert directly into active ledger array
- │
- ├───► (Repeating Loop) ───► Calculate post-completion custom interval gap
- │
- └───► (Static Weekly) ────► Bind reset vector to target day-of-week integer
+[Type Evaluation Fork] 
+ │ ├───► (One-Time Bounty) ──► Insert directly into active ledger array 
+ │ ├───► (Repeating Loop) ───► Calculate post-completion custom interval gap 
+ │ └───► (Static Weekly) ────► Bind reset vector to target day-of-week integer (Evaluated daily by background cron at 04:03 AM EDT)
  ▼
 [Hard-Coded Economy Validation]
  │  Parse incoming tier index token (1, 2, or 3)
@@ -104,8 +101,8 @@ Quest Log functions as a modular web application. By replacing traditional time-
 - [x] **Graceful Teardown Loop:** Configure system lifecycle interrupt interceptors (`SIGINT`, `SIGTERM`) to force connection pool checkpoints, ensuring SQLite cleanly collapses WAL files back to disk on container exits.
 
 #### **Phase 6: Analytics Ledger & Interface Sorting (COMPLETED)**
-- [x] **The Chronicle Summary Engine:** Build an aggregation pipeline that runs every Sunday evening to compile a weekly operational report tracking precise execution frequencies and task type breakdowns.
-- [x] **Triage Layout Sorting:** Refactor the frontend query logic to sort active contracts by matching **Category Grouping** arrays instead of default table insert sequence, visually grouping identical real-world contexts together.
+- [x] **The Chronicle Summary Engine:** Build an aggregation pipeline anchored to Sunday 00:00 AM local time to compile weekly operational reports, completion counts, and habit loop frequencies.
+- [x] **Triage Layout Sorting:** Refactor the query logic to sort active contracts by Category Grouping arrays, status flags, and Priority Shields instead of raw insert ID order.
 
 #### **Phase 7: The Ingestion Bridge (PLANNED)**
 - [ ] **Automated Seeding Engine:** Build a file-based JSON bulk-importer for fast profile onboarding and contract minting.
