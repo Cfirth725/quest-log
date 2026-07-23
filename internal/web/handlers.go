@@ -1,15 +1,23 @@
+// ====================================================================
+// -- WEB DOMAIN: HTTP HANDLERS & CONTROLLER ENGINE --
+// ====================================================================
+
 // Package web coordinates HTTP routing multiplexers, input sanitization gates,
 // and server-side reward economy verification middleware.
 package web
 
 import (
 	"database/sql"
+	"encoding/json"
+	"io"
 	"log"
 	"net/http"
-	"quest-log/internal/database"
-	"quest-log/internal/repository"
 	"strconv"
 	"strings"
+
+	"quest-log/internal/database"
+	"quest-log/internal/ingest"
+	"quest-log/internal/repository"
 )
 
 // ====================================================================
@@ -23,7 +31,42 @@ const (
 )
 
 // ====================================================================
-// -- QUEST FORGE MUTATION HANDLERS --
+// -- 1. BOUNTY BOARD & MAIN DASHBOARD HANDLERS --
+// ====================================================================
+
+// ViewBountyBoardHandler coordinates the retrieval of active tasks and manages the
+// dashboard's display state. It supports a 'Momentum Mode' filter.
+func ViewBountyBoardHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := r.Context()
+	momentumMode := r.URL.Query().Get("momentum") == "true"
+
+	// Defensive DAO Abstraction: Parameterized context lookup for User ID 1
+	activeQuests, err := repository.GetActiveQuests(ctx, database.DB, 1, momentumMode)
+	if err != nil {
+		log.Printf("[ERROR] Database transaction failure loading active workload layout: %v", err)
+		http.Error(w, "Failed to load quests from the vault", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Quests       []repository.QuestResponse
+		MomentumMode bool
+	}{
+		Quests:       activeQuests,
+		MomentumMode: momentumMode,
+	}
+
+	log.Printf("[REALTIME] Compiling active contracts matrix for Bounty Board display")
+	RenderTemplate(w, "bounty_board", data)
+}
+
+// ====================================================================
+// -- 2. QUEST FORGE MUTATION HANDLERS --
 // ====================================================================
 
 // HandleNewQuest serves the 'Quest Forge' creation interface.
@@ -169,7 +212,131 @@ func HandleCompleteQuest(w http.ResponseWriter, r *http.Request) {
 }
 
 // ====================================================================
-// -- ADMINISTRATIVE & TAXONOMY MAINTENANCE HANDLERS --
+// -- 3. THE CHRONICLE (HISTORICAL REVIEW) HANDLERS --
+// ====================================================================
+
+// HandleViewChronicle renders the historical reporting dashboard and weekly summaries.
+func HandleViewChronicle(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := r.Context()
+
+	summary, err := repository.GetWeeklySummary(ctx, database.DB, 1)
+	if err != nil {
+		log.Printf("[ERROR] Scribe engine summary parser failure: %v", err)
+		http.Error(w, "Failed to load historical archives from The Chronicle", http.StatusInternalServerError)
+		return
+	}
+
+	report, err := repository.GenerateWeeklyChronicleReport(ctx, database.DB)
+	if err != nil {
+		log.Printf("[ERROR] Chronicle metrics evaluation execution block: %v", err)
+	} else {
+		summary.Report = report
+	}
+
+	log.Printf("[REALTIME] Fetching historic ledger archives for weekly review window")
+	RenderTemplate(w, "chronicle", summary)
+}
+
+// HandleChronicleQuests processes bulk archival transitions for finished tasks.
+func HandleChronicleQuests(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := r.Context()
+	count, err := repository.ChronicleCompletedQuests(ctx, database.DB)
+	if err != nil {
+		log.Printf("[ERROR] Scribe engine failed compiling Chronicle tasks: %v", err)
+		http.Error(w, "Failed to compile the chronicle ledger", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("[OK] Chronicles updated: %d finished quests committed to historical ledger archives.", count)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// ====================================================================
+// -- 4. THE ARCANE SCRIPTORIUM (BULK INGESTION) HANDLERS --
+// ====================================================================
+
+// RenderScriptoriumHandler serves the bulk ingestion page interface.
+func RenderScriptoriumHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	log.Printf("[REALTIME] Serving Arcane Scriptorium interface")
+
+	data := struct {
+		Title string
+	}{
+		Title: "The Arcane Scriptorium",
+	}
+
+	RenderTemplate(w, "scriptorium", data)
+}
+
+// ImportQuestsAPIHandler receives raw JSON manifest payloads, executes sanitization
+// and schema validation, and commits records down to the database inside a batch transaction.
+func ImportQuestsAPIHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	log.Printf("[REALTIME] Inbound JSON manifest received")
+
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("[ERROR] Payload read fault on /api/v1/quests/import: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to read request body payload"})
+		return
+	}
+	defer r.Body.Close()
+
+	// 1. Pipeline extraction & schema validation pass
+	extractedQuests, err := ingest.ParseJSONPayload(bodyBytes)
+	if err != nil {
+		log.Printf("[ERROR] Validation/Parsing fault on import: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	// 2. Execute transactional batch import
+	userID := 1 // Default primary user scope
+	result, err := ingest.ExecuteBatchIngestion(r.Context(), database.DB, userID, extractedQuests)
+	if err != nil {
+		log.Printf("[ERROR] Batch transaction execution failed: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	// 3. Return telemetry payload
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":             "success",
+		"quests_minted":      result.QuestsMinted,
+		"categories_created": result.CategoriesCreated,
+		"total_processed":    result.TotalProcessed,
+	})
+}
+
+// ====================================================================
+// -- 5. ADMINISTRATIVE & TAXONOMY HANDLERS --
 // ====================================================================
 
 // HandleSettings renders the admin dashboard view.
@@ -252,25 +419,6 @@ func HandleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[OK] Successfully dropped taxonomy node record ID: %s", id)
 	http.Redirect(w, r, "/settings", http.StatusSeeOther)
-}
-
-// HandleChronicleQuests processes bulk archival transitions for finished tasks.
-func HandleChronicleQuests(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	ctx := r.Context()
-	count, err := repository.ChronicleCompletedQuests(ctx, database.DB)
-	if err != nil {
-		log.Printf("[ERROR] Scribe engine failed compiling Chronicle tasks: %v", err)
-		http.Error(w, "Failed to compile the chronicle ledger", http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("[OK] Chronicles updated: %d finished quests committed to historical ledger archives.", count)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // ArchiveQuestHandler executes soft-delete sequences.

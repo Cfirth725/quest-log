@@ -1,0 +1,123 @@
+{{ define "content" }}
+<div class="bounty-header">
+    <div>
+        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary);">🔮 The Arcane Scriptorium</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+            Transcribe raw JSON manifests and external scrolls into active database contracts.
+        </p>
+    </div>
+</div>
+
+<div id="telemetry-banner" class="telemetry-banner hidden" style="margin-bottom: 1.5rem;">
+    <span id="telemetry-status-token" class="token-badge">[OK]</span>
+    <span id="telemetry-message">Manifest transcribed successfully.</span>
+</div>
+
+<div class="scriptorium-grid">
+    <div class="editor-card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">📜 Scroll Manifest Ingestion</h3>
+            <span class="schema-hint">JSON Array or Single Object</span>
+        </div>
+        
+        <form id="ingest-form" onsubmit="handleManifestIngestion(event)">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <textarea 
+                    id="json-payload" 
+                    name="payload" 
+                    rows="12" 
+                    placeholder='[
+  {
+    "title": "QUEST TITLE",
+    "category": "QUEST CATEGORY",
+    "difficulty": "QUEST DIFFICULTY LEVEL",
+    "quest_type": "QUEST TYPE",
+    "is_non_negotiable": true or false
+  }
+]' 
+                    required></textarea>
+            </div>
+
+            <div class="form-actions" style="display: flex; gap: 10px;">
+                <button type="submit" id="submit-btn" class="submit-btn" style="flex: 2;">
+                    ✨ Transcribe Manifest
+                </button>
+                <button type="button" onclick="clearPayloadEditor()" class="complete-btn" style="flex: 1;">
+                    🧹 Clear
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <aside class="reference-card">
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--text-primary);">🛡️ Schema Guide</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0;">
+            Payloads undergo Ghost Guard sanitization and Hard-Coded Economy XP bounds check before atomic commit.
+        </p>
+        
+        <ul class="schema-list">
+            <li><code>title</code> <span>(Required) String, max 255 chars</span></li>
+            <li><code>category</code> <span>(Optional) Auto-minted if new</span></li>
+            <li><code>difficulty</code> <span>"easy" (1XP), "medium" (5XP), "hard" (10XP)</span></li>
+            <li><code>quest_type</code> <span>"One-Time", "Daily", "Repeating", "Weekly"</span></li>
+            <li><code>is_non_negotiable</code> <span>Boolean (Priority Shield)</span></li>
+        </ul>
+    </aside>
+</div>
+
+<script>
+async function handleManifestIngestion(event) {
+    event.preventDefault();
+    
+    const submitBtn = document.getElementById('submit-btn');
+    const payloadArea = document.getElementById('json-payload');
+    const banner = document.getElementById('telemetry-banner');
+    const tokenBadge = document.getElementById('telemetry-status-token');
+    const messageSpan = document.getElementById('telemetry-message');
+
+    const rawPayload = payloadArea.value.trim();
+    if (!rawPayload) return;
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = "⚡ Transcribing...";
+
+    try {
+        const response = await fetch('/api/v1/quests/import', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: rawPayload
+        });
+
+        const data = await response.json();
+
+        banner.classList.remove('hidden', 'banner-ok', 'banner-error');
+
+        if (response.ok) {
+            banner.classList.add('banner-ok');
+            tokenBadge.innerText = "[OK]";
+            messageSpan.innerText = `Successfully minted ${data.quests_minted} quest(s) with ${data.categories_created} new category taxonomy item(s).`;
+            payloadArea.value = ""; 
+        } else {
+            banner.classList.add('banner-error');
+            tokenBadge.innerText = "[ERROR]";
+            messageSpan.innerText = data.error || "Failed to transcribe manifest payload.";
+        }
+    } catch (err) {
+        banner.classList.remove('hidden', 'banner-ok');
+        banner.classList.add('banner-error');
+        tokenBadge.innerText = "[ERROR]";
+        messageSpan.innerText = "Network fault or unparseable JSON payload structure.";
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "✨ Transcribe Manifest";
+    }
+}
+
+function clearPayloadEditor() {
+    document.getElementById('json-payload').value = '';
+    document.getElementById('telemetry-banner').classList.add('hidden');
+}
+</script>
+{{ end }}

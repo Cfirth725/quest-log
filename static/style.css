@@ -281,6 +281,100 @@ input:focus, select:focus, textarea:focus {
     accent-color: var(--primary-accent);
 }
 
+/* --- 7a. THE ARCANE SCRIPTORIUM (BULK INGESTION) LAYOUT --- */
+.scriptorium-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 0;
+}
+
+.scriptorium-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    margin-top: 0;
+}
+
+.editor-card, .reference-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.editor-card textarea {
+    width: 100%;
+    background-color: #12161F;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.9rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.editor-card textarea:focus {
+    outline: none;
+    border-color: var(--primary-accent);
+}
+
+.telemetry-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    margin-top: 1rem;
+    font-weight: 600;
+}
+
+.banner-ok {
+    background-color: rgba(56, 161, 105, 0.15);
+    border: 1px solid var(--success-green);
+    color: #68D391;
+}
+
+.banner-error {
+    background-color: rgba(229, 62, 62, 0.15);
+    border: 1px solid var(--momentum-red);
+    color: #FEB2B2;
+}
+
+.schema-hint {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.schema-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+}
+
+.schema-list li {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.schema-list li code {
+    color: var(--primary-accent);
+    font-weight: 700;
+}
+
+.schema-list li span {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.hidden { display: none !important; }
+
 /* --- 8. BUTTONS & ACTIVE USER INTERACTION --- */
 .submit-btn {
     background: var(--primary-accent);
@@ -544,6 +638,11 @@ input:focus, select:focus, textarea:focus {
         padding: 1.1rem;
         font-size: 1.05rem;
         text-align: center;
+    }
+
+    /* Scriptorium Mobile Layout Stacking */
+    .scriptorium-grid {
+        grid-template-columns: 1fr;
     }
 
     .quest-meta {

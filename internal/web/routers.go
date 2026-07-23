@@ -1,80 +1,44 @@
-// Package web coordinates HTTP routing multiplexers, input sanitization gates,
-// and server-side reward economy verification middleware.
+// ====================================================================
+// -- ROUTER MATRIX & PATH MAPPING ENGINE --
+// ====================================================================
+
 package web
 
 import (
-	"log"
+	"database/sql"
 	"net/http"
-	"quest-log/internal/database"
-	"quest-log/internal/repository"
 )
 
-// ====================================================================
-// -- THE BOUNTY BOARD (MAIN DASHBOARD) ENGINE --
-// ====================================================================
+// RegisterRoutes maps all system web views and API endpoints to the HTTP multiplexer.
+func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
+	// Asset Pipeline: Serve static dependencies (CSS, JS, Images).
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-// ViewBountyBoardHandler coordinates the retrieval of active tasks and manages the
-// dashboard's display state. It supports a 'Momentum Mode' filter to assist
-// with cognitive load management during high-pressure events.
-func ViewBountyBoardHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
+	// 1. Bounty Board & Main Dashboards
+	mux.HandleFunc("GET /", ViewBountyBoardHandler)
 
-	ctx := r.Context()
-	momentumMode := r.URL.Query().Get("momentum") == "true"
+	// 2. The Arcane Scriptorium (Bulk Ingestion Bridge)
+	mux.HandleFunc("GET /scriptorium", RenderScriptoriumHandler)
+	mux.HandleFunc("POST /api/v1/quests/import", ImportQuestsAPIHandler)
 
-	// Defensive DAO Abstraction: Fully parameterized context lookup
-	// Defaulting to User ID 1 for the system owner profile.
-	activeQuests, err := repository.GetActiveQuests(ctx, database.DB, 1, momentumMode)
-	if err != nil {
-		log.Printf("[ERROR] Database transaction failure loading active workload layout: %v", err)
-		http.Error(w, "Failed to load quests from the vault", http.StatusInternalServerError)
-		return
-	}
+	// 3. The Chronicle (Weekly Review)
+	mux.HandleFunc("GET /chronicle", HandleViewChronicle)
+	mux.HandleFunc("POST /chronicle/archive", HandleChronicleQuests)
 
-	data := struct {
-		Quests       []repository.QuestResponse
-		MomentumMode bool
-	}{
-		Quests:       activeQuests,
-		MomentumMode: momentumMode,
-	}
+	// 4. The Forge (Quest Creation & Completion)
+	mux.HandleFunc("GET /newquest", HandleNewQuest)
+	mux.HandleFunc("POST /quests/create", HandleCreateQuest)
+	mux.HandleFunc("POST /quests/complete", HandleCompleteQuest)
 
-	log.Printf("[REALTIME] Compiling active contracts matrix for Bounty Board display")
-	RenderTemplate(w, "bounty_board", data)
-}
+	// 5. Administrative & Taxonomy Management
+	mux.HandleFunc("GET /settings", HandleSettings)
+	mux.HandleFunc("POST /categories/create", HandleCreateCategory)
+	mux.HandleFunc("POST /categories/delete", HandleDeleteCategory)
+	mux.HandleFunc("POST /settings/archive", ArchiveQuestHandler)
+	mux.HandleFunc("POST /settings/downgrade", DowngradeQuestHandler)
 
-// ====================================================================
-// -- THE CHRONICLE (WEEKLY REVIEW WINDOW) ENGINE --
-// ====================================================================
-
-// HandleViewChronicle renders the historical reporting dashboard and weekly summaries.
-func HandleViewChronicle(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	ctx := r.Context()
-
-	// Gather the core itemized rolling victory log since Sunday EDT
-	summary, err := repository.GetWeeklySummary(ctx, database.DB, 1)
-	if err != nil {
-		log.Printf("[ERROR] Scribe engine summary parser failure: %v", err)
-		http.Error(w, "Failed to load historical archives from The Chronicle", http.StatusInternalServerError)
-		return
-	}
-
-	// Generate the aggregate analytical metrics
-	report, err := repository.GenerateWeeklyChronicleReport(ctx, database.DB)
-	if err != nil {
-		log.Printf("[ERROR] Chronicle metrics evaluation execution block: %v", err)
-	} else {
-		summary.Report = report
-	}
-
-	log.Printf("[REALTIME] Fetching historic ledger archives for weekly review window")
-	RenderTemplate(w, "chronicle", summary)
+	// Suppress favicon.ico from triggering the catch-all Bounty Board route
+	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+    	w.WriteHeader(http.StatusNoContent)
+	})
 }

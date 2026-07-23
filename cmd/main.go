@@ -62,31 +62,14 @@ func main() {
 	database.RunMasterSpawner(db)
 
 	// ====================================================================
-	// -- PHASE 3: HTTP ROUTE CONFIGISTRATION MATRIX --
+	// -- PHASE 3: HTTP ROUTE CONFIGURATION MATRIX --
 	// ====================================================================
 
 	log.Println("[INIT] Spawning HTTP router multiplexer and matching paths")
 	mux := http.NewServeMux()
 
-	// Asset Pipeline: Serve static dependencies (CSS, JS, Images).
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-
-	// Dashboard & Telemetry: Primary views for active tasks and historical performance.
-	mux.HandleFunc("GET /", web.ViewBountyBoardHandler)
-	mux.HandleFunc("GET /chronicle", web.HandleViewChronicle)
-	mux.HandleFunc("POST /chronicle/archive", web.HandleChronicleQuests)
-
-	// The Forge: Management endpoints for quest creation and state transitions.
-	mux.HandleFunc("GET /newquest", web.HandleNewQuest)
-	mux.HandleFunc("POST /quests/create", web.HandleCreateQuest)
-	mux.HandleFunc("POST /quests/complete", web.HandleCompleteQuest)
-
-	// Administrative: System settings and category hierarchy management.
-	mux.HandleFunc("GET /settings", web.HandleSettings)
-	mux.HandleFunc("POST /categories/create", web.HandleCreateCategory)
-	mux.HandleFunc("POST /categories/delete", web.HandleDeleteCategory)
-	mux.HandleFunc("POST /settings/archive", web.ArchiveQuestHandler)
-	mux.HandleFunc("POST /settings/downgrade", web.DowngradeQuestHandler)
+	// Register all HTTP handlers and API endpoints from internal/web
+	web.RegisterRoutes(mux, db)
 
 	log.Println("[OK] Inbound web traffic pathways successfully mapped to router multiplexer")
 
