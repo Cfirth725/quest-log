@@ -147,23 +147,24 @@ func ChronicleCompletedQuests(ctx context.Context, db *sql.DB) (int64, error) {
 	return result.RowsAffected()
 }
 
-// GetWeeklySummary queries total XP allocations and aggregates itemized wins since Sunday EDT.
+// GetWeeklySummary queries total XP allocations and aggregates itemized wins since Sunday 00:00 AM.
 func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (ChronicleSummary, error) {
 	var summary ChronicleSummary
 
+	// Aggregate count and total XP
 	err := db.QueryRowContext(ctx, `
 		SELECT 
 			COUNT(id), 
 			COALESCE(SUM(xp_awarded), 0) 
 		FROM quest_completions 
 		WHERE completed_by_user_id = ? 
-		  AND datetime(completed_at) >= datetime('now', '-4 hours', 'start of week', '+4 hours')`, userID).Scan(&summary.QuestCount, &summary.TotalXP)
+		  AND datetime(completed_at, '+00:00', 'localtime') >= datetime('now', 'localtime', 'start of day', '-' || strftime('%w', 'now', 'localtime') || ' days')`, userID).Scan(&summary.QuestCount, &summary.TotalXP)
 
 	if err != nil {
 		return summary, fmt.Errorf("dao aggregation block: weekly volume compilation failed: %w", err)
 	}
 
-	// Uses LEFT JOIN so tasks without a category still show up!
+	// Query recent wins list
 	rows, err := db.QueryContext(ctx, `
 		SELECT 
 			q.title, 
@@ -175,7 +176,7 @@ func GetWeeklySummary(ctx context.Context, db *sql.DB, userID int) (ChronicleSum
 		JOIN quests q ON qc.quest_id = q.id
 		LEFT JOIN categories c ON q.category_id = c.id
 		WHERE qc.completed_by_user_id = ?
-		  AND datetime(qc.completed_at) >= datetime('now', '-4 hours', 'start of week', '+4 hours')
+		  AND datetime(qc.completed_at, '+00:00', 'localtime') >= datetime('now', 'localtime', 'start of day', '-' || strftime('%w', 'now', 'localtime') || ' days')
 		ORDER BY qc.completed_at DESC`, userID)
 
 	if err != nil {
@@ -208,7 +209,7 @@ func GenerateWeeklyChronicleReport(ctx context.Context, db *sql.DB) (*Operationa
 			COUNT(CASE WHEN q.quest_type != 'One-Time' THEN 1 END) as recurring_count
 		FROM quest_completions qc
 		JOIN quests q ON qc.quest_id = q.id
-		WHERE qc.completed_at >= datetime('now', '-4 hours', 'start of week', '+4 hours')
+		WHERE datetime(qc.completed_at, '+00:00', 'localtime') >= datetime('now', 'localtime', 'start of day', '-' || strftime('%w', 'now', 'localtime') || ' days')
 		  AND q.deleted_at IS NULL`
 
 	err := db.QueryRowContext(ctx, splitQuery).Scan(&report.OneTimeCompleted, &report.RecurringCompleted)
@@ -225,7 +226,7 @@ func GenerateWeeklyChronicleReport(ctx context.Context, db *sql.DB) (*Operationa
 		JOIN quests q ON qc.quest_id = q.id
 		LEFT JOIN categories c ON q.category_id = c.id
 		WHERE q.quest_type != 'One-Time'
-		  AND qc.completed_at >= datetime('now', '-4 hours', 'start of week', '+4 hours')
+		  AND datetime(qc.completed_at, '+00:00', 'localtime') >= datetime('now', 'localtime', 'start of day', '-' || strftime('%w', 'now', 'localtime') || ' days')
 		  AND q.deleted_at IS NULL
 		GROUP BY q.title, category_name
 		ORDER BY execution_count DESC, category_name ASC;`
