@@ -1,11 +1,16 @@
 {{ define "content" }}
-<div class="bounty-header">
+<div class="bounty-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
     <div>
         <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary);">🔮 The Arcane Scriptorium</h2>
         <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
             Transcribe raw JSON manifests and external scrolls into active database contracts.
         </p>
     </div>
+
+    <!-- Quick Copy Gemini System Prompt Button -->
+    <button id="copyPromptBtn" class="submit-btn" onclick="copyGeminiPrompt()" style="width: auto; padding: 0.6rem 1rem; font-size: 0.85rem;">
+        📋 Copy Gemini Prompt
+    </button>
 </div>
 
 <div id="telemetry-banner" class="telemetry-banner hidden" style="margin-bottom: 1.5rem;">
@@ -90,6 +95,26 @@
 let activePayload = null;
 let existingCategoriesList = [];
 let unmatchedCategoriesList = [];
+
+// Store the system prompt string directly inside JavaScript
+const GEMINI_SYSTEM_PROMPT = `You are a Quest Master task generator. Convert the user's tasks or goals into a JSON array of Quest objects matching this schema:
+
+[
+  {
+    "title": "Clear, actionable task name",
+    "category": "Category Name (e.g., DevOps, Health, Writing)",
+    "quest_type": "One-Time | Daily | Repeating | Weekly",
+    "difficulty": "easy | medium | hard",
+    "is_non_negotiable": false
+  }
+]
+
+Rules:
+1. "category": Must use the key "category" (NOT "category_name").
+2. "difficulty": Must be "easy" (1 XP), "medium" (5 XP), or "hard" (10 XP).
+3. "quest_type": Must be "One-Time", "Daily", "Repeating", or "Weekly".
+4. "is_non_negotiable": Set to true ONLY if it is a critical must-do task for today.
+5. Return ONLY valid JSON inside a \`\`\`json codeblock. No extra markdown explanations.`;
 
 async function initiateManifestAnalysis(event) {
     event.preventDefault();
@@ -282,6 +307,55 @@ function closeResolutionModal() {
 function clearPayloadEditor() {
     document.getElementById('json-payload').value = '';
     document.getElementById('telemetry-banner').classList.add('hidden');
+}
+
+function copyGeminiPrompt() {
+    const btn = document.getElementById('copyPromptBtn');
+
+    function showSuccess() {
+        const originalText = btn.innerText;
+        btn.innerText = "✨ Prompt Copied!";
+        btn.style.opacity = "0.8";
+
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.opacity = "1";
+        }, 2500);
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(GEMINI_SYSTEM_PROMPT)
+            .then(showSuccess)
+            .catch(() => fallbackCopyText(GEMINI_SYSTEM_PROMPT, showSuccess));
+    } else {
+        fallbackCopyText(GEMINI_SYSTEM_PROMPT, showSuccess);
+    }
+}
+
+function fallbackCopyText(text, successCallback) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            successCallback();
+        } else {
+            showBanner(false, "[ERROR] Manual copy failed.");
+        }
+    } catch (err) {
+        showBanner(false, "[ERROR] Clipboard access blocked.");
+    }
+
+    document.body.removeChild(textArea);
 }
 </script>
 {{ end }}
