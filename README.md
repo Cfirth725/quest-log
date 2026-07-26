@@ -4,71 +4,76 @@ An offline-first, high-performance background engine and task management system 
 This repository implements a resilient, ADHD-friendly execution framework designed to bridge the gap between long-term high-level goals (such as system design mastery, literature production, and physical conditioning) and daily executive function.
 
 ## 🏗️ Core System Architecture
-Quest Log functions as a modular web application. By replacing traditional time-blocking models with **Task-Based Urgency** and server-validated **Dopamine-Linked Rewards**, this tool maintains a structured workspace to balance shared operations and personal micro-milestones.
+Quest Log functions as a modular web application and headless API server. By replacing traditional time-blocking models with **Task-Based Urgency** and server-validated **Dopamine-Linked Rewards**, this tool maintains a structured workspace to balance shared operations and personal micro-milestones.
 
 ```
-                  ┌────────────────────────────────────────┐
-                  │          static/css/style.css          │
-                  │   (Low-Contrast Migraine-Safe CSS)     │
-                  └───────────────────┬────────────────────┘
-                                      │ (Token Extraction)
-                                      ▼
+                     ┌────────────────────────────────────────┐
+                     │          static/css/style.css          │
+                     │   (Low-Contrast Migraine-Safe CSS)     │
+                     └───────────────────┬────────────────────┘
+                                         │ (Token Extraction)
+                                         ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│                          internal/web/ (Handlers)                      │
+│                        internal/web/ (Handlers)                        │
 │   Parses Inbound Payloads • Form Sanitization • Template Composition   │
-└───────────────┬────────────────────────────────────────┬───────────────┘
-                │                                        │
-                │ (Transactional Writes)                 │ (Evaluates State)
-                ▼                                        ▼
-┌──────────────────────────────┐        ┌────────────────────────────────┐
-│ internal/repository/ (DAO)   │        │     internal/database/         │
-│   Executes Ledger Operations │        │   Connection Pool Enclosure    │
-└───────────────┬──────────────┘        └────────────────┬───────────────┘
-                │                                        │
-                └────────────────────┐ ┌─────────────────┘
-                                     ▼ ▼
-				┌────────────────────────────────────────┐
-				│            data/quests.db              │
-				│       (SQLite3 Engine • WAL Mode)      │
-				└────────────────────────────────────────┘
+└─────────┬──────────────────────────────┬───────────────────────┬───────┘
+          │                              │                       │
+          │ (Transactional Writes)       │ (Evaluates State)     │ (Auth Interceptor)
+          ▼                              ▼                       ▼
+┌──────────────────────────┐   ┌───────────────────┐   ┌──────────────────────────┐
+│ internal/repository/ DAO │   │ internal/database │   │   internal/middleware    │
+│ Executes Ledger Ops      │   │ Conn Pool Encl    │   │  APIKeyAuth Guard Gate   │
+└─────────┬────────────────┘   └─────────┬─────────┘   └─────────┬────────────────┘
+          │                              │                       │
+          └────────────────────┐         │         ┌─────────────┘
+                               ▼         ▼         ▼
+                     ┌────────────────────────────────────────┐
+                     │            data/quests.db              │
+                     │      (SQLite3 Engine • WAL Mode)       │
+                     └────────────────────────────────────────┘
 ```
 
 ## ⚡ Task Lifecycle Processing & Telemetry Ingestion
 ```
-[User Action Input]
- │  POST /quests/create (Form Ingestion Gateway)
- ▼
-[Ghost Guard Layer]
- │  String whitespace sanitization & structural check gates
- ▼
-[Type Evaluation Fork] 
- │ ├───► (One-Time Bounty) ──► Insert directly into active ledger array 
- │ ├───► (Repeating Loop) ───► Calculate post-completion custom interval gap 
- │ └───► (Static Weekly) ────► Bind reset vector to target day-of-week integer (Evaluated daily by background cron at 04:03 AM EDT)
- ▼
+[Inbound Request Gateway]
+│ ├──► POST /quests/create (Form Ingestion Gateway)
+│ └──► GET /api/v1/telemetry (Headless API Entry)
+▼
+[Security & Ghost Guard Layer]
+│ ├──► (API Requests) ──► Validate X-API-Key / Bearer Token against QUESTLOG_API_KEY
+│ └──► (Web Requests) ──► String whitespace sanitization & structural validation gates
+▼
+[Type Evaluation Fork]
+│ ├───► (One-Time Bounty) ──► Insert directly into active ledger array
+│ ├───► (Repeating Loop) ───► Calculate post-completion custom interval gap
+│ └───► (Static Weekly) ────► Bind reset vector to target day-of-week integer
+│ (Evaluated daily by background cron at 04:03 AM EDT)
+▼
 [Hard-Coded Economy Validation]
- │  Parse incoming tier index token (1, 2, or 3)
- │  Map signature reward currency programmatically:
- │    - Tier 1: 🪙 Coin (1 XP)
- │    - Tier 2: 💰 Moneybag (5 XP)
- │    - Tier 3: 👑 Crown (10 XP)
- ▼
+│ Parse incoming tier index token (1, 2, or 3)
+│ Map signature reward currency programmatically:
+│ - Tier 1: 🪙 Coin (1 XP)
+│ - Tier 2: 💰 Moneybag (5 XP)
+│ - Tier 3: 👑 Crown (10 XP)
+▼
 [Database Execution Pool]
- │  Commit parsed record down to database.DB connection context
- ▼
-[State Complete Signal]
- └─► POST /quests/complete ──► Log to Immutable Chronicle Ledger (`quest_completions`)
+│ Commit parsed record down to database.DB connection context
+▼
+[State Complete / Observability Signal]
+├─► POST /quests/complete ──► Log to Immutable Chronicle Ledger (`quest_completions`)
+└─► GET /api/v1/telemetry ─► Aggregate active workload, daily XP, & taxonomy matrix JSON
 ```
 
-## 🎛️ Core Philosophy & Engineering Constraints
+## ✨ Core Philosophy & Engineering Constraints
 1. **Low-Contrast Visual Architecture:** Built explicitly around a custom-tuned, light-absorbing dark mode canvas (`#12161F` and `#1E2533`). By abandoning high-contrast white text flashes and intense neon saturation, the system layout drastically limits cognitive eye strain and prevents visual vibration during barometric pressure swings.
 2. **The Hard-Coded Economy:** Eliminates arbitrary point value inflation. Task rewards are strictly compressed to static server-evaluated integers ($1$, $5$, $10$), ensuring long-term ledger consistency.
 3. **Strategic Momentum Triage:** Implements an immediate frontend filter toggle ("Momentum Mode"). When active, the query engine limits database scanning outputs exclusively to `is_non_negotiable` tasks, lowering the interface cognitive load down to zero during tight windows.
 4. **Structured DevOps Telemetry:** Employs explicit, machine-readable console visual tracking wrappers (`[INIT]`, `[SECURE]`, `[OK]`, `[ERROR]`, `[REALTIME]`) to ensure clean terminal observation under container runtimes.
-5. **Idempotent Storage Infrastructure:** Combines strict relational SQLite constraint safety layers with a transactional background checkpoint mechanism to guarantee file persistence inside Docker volume boundaries.
+5. **Zero-Trust Headless API Exposure:** Provides a secured REST telemetry endpoint (`/api/v1/telemetry`) protected by API key authentication middleware, allowing external scripts, terminal tools, and dashboards to consume live system analytics without touching HTML templates.
+6. **Idempotent Storage Infrastructure:** Combines strict relational SQLite constraint safety layers with a transactional background checkpoint mechanism to guarantee file persistence inside Docker volume boundaries.
 
 ## 🛠️ Tech Stack & Runtime
-- **Language Runtime:** Go 1.24+ (Native structured templates, type-safe error propagation, and context-aware database bindings)
+- **Language Runtime:** Go 1.24+ (Native structured templates, type-safe error propagation, Go 1.22+ enhanced `net/http` routing, and context-aware database bindings)
 - **Database Engine:** SQLite 3 via `github.com/mattn/go-sqlite3` operating under Write-Ahead Logging (`WAL` mode)
 - **Design System:** Vanilla CSS3 (Centralized Design Tokens)
 - **Orchestration Matrix:** Docker Multi-stage Linux Build
@@ -85,7 +90,7 @@ Quest Log functions as a modular web application. By replacing traditional time-
 - [x] **Timezone Alignment:** Bind data collection and query scopes to local hardware clock configurations (`_loc=Local`) to stabilize automated window resets.
 
 #### **Phase 3: Domain Package Hardening (COMPLETED)**
-- [x] **Standard Package Decoupling:** Re-architect monolithic, single-file internal spaces into clean, scoped domain package boundaries (`database`, `repository`, `web`).
+- [x] **Standard Package Decoupling:** Re-architect monolithic, single-file internal spaces into clean, scoped domain package boundaries (`database`, `repository`, `web`, `middleware`).
 - [x] **Directory Relocation:** Shift the system execution boot layout to `cmd/main.go` to conform to standard Go project layouts.
 - [x] **Terminology Migration:** Wipe away legacy agricultural labels across all components, updating references to **Bounty Board**, **The Forge**, and **The Chronicle**.
 
@@ -104,9 +109,9 @@ Quest Log functions as a modular web application. By replacing traditional time-
 - [x] **The Chronicle Summary Engine:** Build an aggregation pipeline anchored to Sunday 00:00 AM local time to compile weekly operational reports, completion counts, and habit loop frequencies.
 - [x] **Triage Layout Sorting:** Refactor the query logic to sort active contracts by Category Grouping arrays, status flags, and Priority Shields instead of raw insert ID order.
 
-#### **Phase 7: The Ingestion Bridge (PLANNED)**
-- [ ] **Automated Seeding Engine:** Build a file-based JSON bulk-importer for fast profile onboarding and contract minting.
-- [ ] **Headless API Exposure:** Secure headless endpoints to pipe live task analytics straight into Obsidian Dataview notebooks via local JSON payloads.
+#### **Phase 7: The Ingestion Bridge & Headless API (COMPLETED)**
+- [x] **The Arcane Scriptorium:** Build a file-based JSON bulk-importer (`/scriptorium`) with real-time pre-flight category mapping analysis and batch transactional ingestion.
+- [x] **Headless Telemetry Endpoint:** Secure `/api/v1/telemetry` with zero-trust API key middleware to export live workload counts, daily XP disbursements, and category breakdowns for external consumption.
 
 #### **Phase 8: Multi-User Architecture & Personalization (PLANNED)**
 - [ ] **Session Authentication Layer:** Implement a lightweight, secure session state manager to protect individual dashboard profiles.
