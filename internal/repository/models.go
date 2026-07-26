@@ -104,6 +104,28 @@ type HabitFrequency struct {
 }
 
 // ====================================================================
+// -- HEADLESS OBSERVABILITY & TELEMETRY ENTITIES --
+// ====================================================================
+
+// CategoryDistribution represents active task volume broken down by taxonomy category.
+type CategoryDistribution struct {
+	Name  string `json:"category"`
+	Color string `json:"color"`
+	Count int    `json:"count"`
+}
+
+// TelemetryPayload aggregates live performance indicators, workload balances,
+// and daily reward economy totals for programmatic consumption.
+type TelemetryPayload struct {
+	Timestamp          string                 `json:"timestamp"`
+	TotalActiveQuests  int                    `json:"total_active_quests"`
+	CompletedToday     int                    `json:"completed_today"`
+	NonNegotiablesOpen int                    `json:"non_negotiables_open"`
+	XPEarnedToday      int                    `json:"xp_earned_today"`
+	CategoryBreakdown  []CategoryDistribution `json:"category_breakdown"`
+}
+
+// ====================================================================
 // -- CORE TRANSACTIONAL QUEST ENGINE MODELS --
 // ====================================================================
 

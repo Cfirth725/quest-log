@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"quest-log/internal/database"
 	"quest-log/internal/ingest"
@@ -527,4 +528,77 @@ func DowngradeQuestHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[OK] Target cadence configuration reduced down to one-time parameters for ID %d", id)
 	http.Redirect(w, r, "/settings", http.StatusSeeOther)
+}
+
+// ====================================================================
+// -- 6. HEADLESS TELEMETRY & OBSERVABILITY HANDLERS --
+// ====================================================================
+
+// TelemetryAPIHandler executes real-time system metrics evaluation against the active
+// workload database, returning structured JSON for headless observability consumption.
+func TelemetryAPIHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	log.Printf("[REALTIME] Compiling headless system telemetry and workload metrics matrix")
+
+	ctx := r.Context()
+	todayStr := time.Now().Format("2006-01-02")
+
+	telemetry := repository.TelemetryPayload{
+		Timestamp:         time.Now().UTC().Format(time.RFC3339),
+		CategoryBreakdown: []repository.CategoryDistribution{},
+	}
+
+	// 1. Evaluate active workload contracts & priority non-negotiables
+	err := database.DB.QueryRowContext(ctx, `
+		SELECT 
+			COUNT(*),
+			COALESCE(SUM(CASE WHEN is_non_negotiable = 1 AND status != 'completed' THEN 1 ELSE 0 END), 0)
+		FROM quests WHERE status != 'completed' AND deleted_at IS NULL
+	`).Scan(&telemetry.TotalActiveQuests, &telemetry.NonNegotiablesOpen)
+	if err != nil {
+		log.Printf("[ERROR] Telemetry engine metrics evaluation failure on active pool: %v", err)
+	}
+
+	// 2. Evaluate daily resolution velocity & XP disbursements from the immutable ledger
+	err = database.DB.QueryRowContext(ctx, `
+		SELECT 
+			COUNT(*),
+			COALESCE(SUM(xp_awarded), 0)
+		FROM quest_completions 
+		WHERE DATE(completed_at) = ?
+	`, todayStr).Scan(&telemetry.CompletedToday, &telemetry.XPEarnedToday)
+	if err != nil {
+		log.Printf("[ERROR] Telemetry engine metrics evaluation failure on daily ledger: %v", err)
+	}
+
+	// 3. Compile active taxonomy category distribution matrix
+	rows, err := database.DB.QueryContext(ctx, `
+		SELECT c.name, COALESCE(c.color_hex, '#808080'), COUNT(q.id) 
+		FROM quests q
+		JOIN categories c ON q.category_id = c.id
+		WHERE q.status != 'completed' AND q.deleted_at IS NULL
+		GROUP BY c.id
+	`)
+	if err != nil {
+		log.Printf("[ERROR] Telemetry engine failure querying taxonomy distribution: %v", err)
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			var cat repository.CategoryDistribution
+			if err := rows.Scan(&cat.Name, &cat.Color, &cat.Count); err == nil {
+				telemetry.CategoryBreakdown = append(telemetry.CategoryBreakdown, cat)
+			}
+		}
+	}
+
+	log.Printf("[OK] Telemetry payload assembled successfully: %d active quests, %d XP disbursed today",
+		telemetry.TotalActiveQuests, telemetry.XPEarnedToday)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(telemetry)
 }

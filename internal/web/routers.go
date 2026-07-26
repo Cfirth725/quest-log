@@ -7,6 +7,8 @@ package web
 import (
 	"database/sql"
 	"net/http"
+
+	"quest-log/internal/middleware"
 )
 
 // RegisterRoutes maps all system web views and API endpoints to the HTTP multiplexer.
@@ -20,10 +22,10 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 	// 2. The Arcane Scriptorium (Bulk Ingestion Bridge)
 	mux.HandleFunc("GET /scriptorium", RenderScriptoriumHandler)
 	mux.HandleFunc("POST /api/v1/quests/import", ImportQuestsAPIHandler)
+	mux.HandleFunc("POST /api/v1/quests/analyze", AnalyzeImportAPIHandler)
 
 	// 3. The Chronicle (Weekly Review)
 	mux.HandleFunc("GET /chronicle", HandleViewChronicle)
-	mux.HandleFunc("POST /api/v1/quests/analyze", AnalyzeImportAPIHandler)
 	mux.HandleFunc("POST /chronicle/archive", HandleChronicleQuests)
 
 	// 4. The Forge (Quest Creation & Completion)
@@ -37,6 +39,9 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("POST /categories/delete", HandleDeleteCategory)
 	mux.HandleFunc("POST /settings/archive", ArchiveQuestHandler)
 	mux.HandleFunc("POST /settings/downgrade", DowngradeQuestHandler)
+
+	// 6. Headless Observability & Telemetry API
+	mux.HandleFunc("GET /api/v1/telemetry", middleware.APIKeyAuth(TelemetryAPIHandler))
 
 	// Suppress favicon.ico from triggering the catch-all Bounty Board route
 	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
