@@ -79,10 +79,24 @@ func Connect(ctx context.Context) (*sql.DB, error) {
 
 // createTables applies the raw SQL schema embedded at compile-time contextually.
 func createTables(ctx context.Context, db *sql.DB) error {
+	// 1. Run base embedded schema
 	_, err := db.ExecContext(ctx, schemaSQL)
 	if err != nil {
 		return fmt.Errorf("database deployment block: failed to execute embedded schema: %w", err)
 	}
+
+	// 2. Safe Column Migrations for existing deployments
+	migrations := []string{
+		"ALTER TABLE users ADD COLUMN pin_hash TEXT DEFAULT '';",
+		"ALTER TABLE users ADD COLUMN theme_preference TEXT DEFAULT 'obsidian';",
+	}
+
+	for _, stmt := range migrations {
+		// Ignore error if column already exists
+		_, _ = db.ExecContext(ctx, stmt)
+	}
+
+	log.Println("[OK] System schema and user migration checks complete")
 	return nil
 }
 

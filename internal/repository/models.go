@@ -58,9 +58,19 @@ type Category struct {
 // User represents a system participant. It tracks identity and behavioral
 // metrics, such as the DopamineStreak used for gamified reward multipliers.
 type User struct {
-	ID             int    `json:"id"`
-	Name           string `json:"name"`
-	DopamineStreak int    `json:"dopamine_streak"`
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	PinHash         string `json:"-"`
+	ThemePreference string `json:"theme_preference"`
+	DopamineStreak  int    `json:"dopamine_streak"`
+}
+
+// Session represents an active authenticated device cookie token.
+type Session struct {
+	Token     string    `json:"token"`
+	UserID    int       `json:"user_id"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // ====================================================================

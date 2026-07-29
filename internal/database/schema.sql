@@ -5,7 +5,21 @@
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    pin_hash TEXT DEFAULT '',
+    theme_preference TEXT DEFAULT 'obsidian',
     dopamine_streak INTEGER DEFAULT 0
+);
+
+-- ====================================================================
+-- -- SESSION STATE STORAGE (MULTI-DEVICE AUTHENTICATION) --
+-- ====================================================================
+
+CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ====================================================================
