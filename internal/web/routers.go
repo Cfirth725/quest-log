@@ -1,7 +1,5 @@
-// ====================================================================
-// -- ROUTER MATRIX & PATH MAPPING ENGINE --
-// ====================================================================
-
+// Package web coordinates HTTP request lifecycle routing, form decoding,
+// template rendering, and user session authentication handlers.
 package web
 
 import (
@@ -11,10 +9,19 @@ import (
 	"quest-log/internal/middleware"
 )
 
+// ====================================================================
+// -- ROUTER MATRIX & PATH MAPPING ENGINE --
+// ====================================================================
+
 // RegisterRoutes maps all system web views and API endpoints to the HTTP multiplexer.
 func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 	// Asset Pipeline: Serve static dependencies (CSS, JS, Images).
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	// 0. Session Authentication & Identity Gateways
+	mux.HandleFunc("GET /login", RenderLoginPageHandler)
+	mux.HandleFunc("POST /login", HandleLoginSubmitHandler)
+	mux.HandleFunc("POST /logout", HandleLogoutHandler)
 
 	// 1. Bounty Board & Main Dashboards
 	mux.HandleFunc("GET /", ViewBountyBoardHandler)
@@ -40,7 +47,7 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("POST /settings/archive", ArchiveQuestHandler)
 	mux.HandleFunc("POST /settings/downgrade", DowngradeQuestHandler)
 
-	// 6. Headless Observability & Telemetry API
+	// 6. Headless Observability & Telemetry API (Protected by API Key)
 	mux.HandleFunc("GET /api/v1/telemetry", middleware.APIKeyAuth(TelemetryAPIHandler))
 
 	// Suppress favicon.ico from triggering the catch-all Bounty Board route

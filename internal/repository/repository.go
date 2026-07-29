@@ -131,14 +131,13 @@ func CreateQuest(ctx context.Context, db *sql.DB, title string, categoryID int, 
 // -- THE CHRONICLE (HISTORICAL DATA ROLLUPS) DAO LAYER --
 // ====================================================================
 
-// ChronicleCompletedQuests sweeps and soft-archives all completed One-Time quests.
+// ChronicleCompletedQuests sweeps and soft-archives all completed One-Time quests across all profiles.
 func ChronicleCompletedQuests(ctx context.Context, db *sql.DB) (int64, error) {
 	query := `
 		UPDATE quests 
 		SET status = 'archived' 
 		WHERE LOWER(status) = 'completed' 
-		  AND quest_type = 'One-Time' 
-		  AND (owner_id = 1 OR owner_id = 0);`
+		  AND quest_type = 'One-Time';`
 
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
@@ -283,9 +282,14 @@ func DeleteCategoryByID(ctx context.Context, db *sql.DB, id string) error {
 	return err
 }
 
-// GetCategories outputs all functional categories unassigned to archival flags.
-func GetCategories(ctx context.Context, db *sql.DB) ([]Category, error) {
-	rows, err := db.QueryContext(ctx, "SELECT id, owner_id, name, color_hex, is_archived FROM categories WHERE is_archived = 0 ORDER BY name ASC")
+// GetCategories outputs functional categories available to the user or shared household.
+func GetCategories(ctx context.Context, db *sql.DB, userID int) ([]Category, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT id, owner_id, name, color_hex, is_archived 
+		FROM categories 
+		WHERE is_archived = 0 AND (owner_id = ? OR owner_id = 0) 
+		ORDER BY name ASC
+	`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -294,17 +298,20 @@ func GetCategories(ctx context.Context, db *sql.DB) ([]Category, error) {
 	var categories []Category
 	for rows.Next() {
 		var c Category
-		if err := rows.Scan(&c.ID, &c.OwnerID, &c.Name, &c.ColorHex, &c.IsArchived); err != nil {
-			return nil, err
+		if err := rows.Scan(&c.ID, &c.OwnerID, &c.Name, &c.ColorHex, &c.IsArchived); err == nil {
+			categories = append(categories, c)
 		}
-		categories = append(categories, c)
 	}
 	return categories, nil
 }
 
-// GetUsers captures active user metric arrays.
+// GetUsers captures active user identity and preference attributes.
 func GetUsers(ctx context.Context, db *sql.DB) ([]User, error) {
-	rows, err := db.QueryContext(ctx, "SELECT id, name, dopamine_streak FROM users ORDER BY name ASC")
+	rows, err := db.QueryContext(ctx, `
+		SELECT id, name, COALESCE(pin_hash, ''), COALESCE(theme_preference, 'obsidian'), dopamine_streak 
+		FROM users 
+		ORDER BY id ASC
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -313,10 +320,9 @@ func GetUsers(ctx context.Context, db *sql.DB) ([]User, error) {
 	var users []User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.ID, &u.Name, &u.DopamineStreak); err != nil {
-			return nil, err
+		if err := rows.Scan(&u.ID, &u.Name, &u.PinHash, &u.ThemePreference, &u.DopamineStreak); err == nil {
+			users = append(users, u)
 		}
-		users = append(users, u)
 	}
 	return users, nil
 }

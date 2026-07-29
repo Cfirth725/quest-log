@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"quest-log/internal/database"
+	"quest-log/internal/middleware"
 	"quest-log/internal/web"
 
 	"github.com/robfig/cron/v3"
@@ -71,6 +72,9 @@ func main() {
 	// Register all HTTP handlers and API endpoints from internal/web
 	web.RegisterRoutes(mux, db)
 
+	// Apply Session Authentication Middleware to the root multiplexer
+	authenticatedHandler := middleware.SessionAuth(db)(mux)
+
 	log.Println("[OK] Inbound web traffic pathways successfully mapped to router multiplexer")
 
 	// ====================================================================
@@ -85,7 +89,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    addr,
-		Handler: mux,
+		Handler: authenticatedHandler,
 	}
 
 	go func() {

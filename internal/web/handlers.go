@@ -18,6 +18,7 @@ import (
 
 	"quest-log/internal/database"
 	"quest-log/internal/ingest"
+	"quest-log/internal/middleware"
 	"quest-log/internal/repository"
 )
 
@@ -44,25 +45,33 @@ func ViewBountyBoardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	user, ok := middleware.GetUserFromContext(ctx)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	momentumMode := r.URL.Query().Get("momentum") == "true"
 
-	// Defensive DAO Abstraction: Parameterized context lookup for User ID 1
-	activeQuests, err := repository.GetActiveQuests(ctx, database.DB, 1, momentumMode)
+	// Fetch personal + household quests for the authenticated user
+	activeQuests, err := repository.GetActiveQuests(ctx, database.DB, user.ID, momentumMode)
 	if err != nil {
-		log.Printf("[ERROR] Database transaction failure loading active workload layout: %v", err)
+		log.Printf("[ERROR] Database transaction failure loading active workload layout for user %d: %v", user.ID, err)
 		http.Error(w, "Failed to load quests from the vault", http.StatusInternalServerError)
 		return
 	}
 
 	data := struct {
+		User         *repository.User
 		Quests       []repository.QuestResponse
 		MomentumMode bool
 	}{
+		User:         user,
 		Quests:       activeQuests,
 		MomentumMode: momentumMode,
 	}
 
-	log.Printf("[REALTIME] Compiling active contracts matrix for Bounty Board display")
+	log.Printf("[REALTIME] Compiling active contracts matrix for User %d (%s) on Bounty Board", user.ID, user.Name)
 	RenderTemplate(w, "bounty_board", data)
 }
 
@@ -73,8 +82,13 @@ func ViewBountyBoardHandler(w http.ResponseWriter, r *http.Request) {
 // HandleNewQuest serves the 'Quest Forge' creation interface.
 func HandleNewQuest(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	user, ok := middleware.GetUserFromContext(ctx)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
 
-	categories, err := repository.GetCategories(ctx, database.DB)
+	categories, err := repository.GetCategories(ctx, database.DB, user.ID)
 	if err != nil {
 		log.Printf("[ERROR] Failed to fetch taxonomy categories for The Forge: %v", err)
 	}
@@ -89,7 +103,7 @@ func HandleNewQuest(w http.ResponseWriter, r *http.Request) {
 		Users:      users,
 	}
 
-	log.Printf("[REALTIME] Rendering Quest Forge template wrapper")
+	log.Printf("[REALTIME] Rendering Quest Forge template wrapper for User %d (%s)", user.ID, user.Name)
 	RenderTemplate(w, "new_quest", data)
 }
 
@@ -101,6 +115,12 @@ func HandleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	user, ok := middleware.GetUserFromContext(ctx)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		log.Printf("[ERROR] Form parser failed processing quest payload: %v", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -114,6 +134,11 @@ func HandleCreateQuest(w http.ResponseWriter, r *http.Request) {
 	questType := r.FormValue("quest_type")
 	intervalStr := r.FormValue("repeat_interval_days")
 	resetDayStr := r.FormValue("reset_day_of_week")
+
+	// Default unassigned owner selections to the active session user
+	if ownerID == 0 && r.FormValue("owner_id") == "" {
+		ownerID = user.ID
+	}
 
 	difficulty, err := strconv.Atoi(difficultyStr)
 	if err != nil {
@@ -181,7 +206,7 @@ func HandleCreateQuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("[OK] Successfully minted quest contract '%s' into active ledger pool", cleanTitle)
+	log.Printf("[OK] Successfully minted quest contract '%s' into active ledger pool for Owner %d", cleanTitle, ownerID)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -193,22 +218,26 @@ func HandleCompleteQuest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	user, ok := middleware.GetUserFromContext(ctx)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	questID, err := strconv.Atoi(r.FormValue("quest_id"))
 	if err != nil {
 		http.Error(w, "Invalid Quest Pointer Reference", http.StatusBadRequest)
 		return
 	}
 
-	// Default to User ID 1 until multi-user UI interface is implemented
-	userID := 1
-
-	if err := repository.CompleteQuest(ctx, database.DB, questID, userID); err != nil {
-		log.Printf("[ERROR] Relational database breakdown finalizing transaction state: %v", err)
+	// Attribute quest resolution and streak gains directly to the session user
+	if err := repository.CompleteQuest(ctx, database.DB, questID, user.ID); err != nil {
+		log.Printf("[ERROR] Relational database breakdown finalizing transaction state for user %d: %v", user.ID, err)
 		http.Error(w, "Could not finalize quest completion status", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("[OK] State transition committed: quest ID %d resolved and rewards disbursed", questID)
+	log.Printf("[OK] State transition committed: quest ID %d resolved and rewards disbursed to User %d (%s)", questID, user.ID, user.Name)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -224,10 +253,15 @@ func HandleViewChronicle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	user, ok := middleware.GetUserFromContext(ctx)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
 
-	summary, err := repository.GetWeeklySummary(ctx, database.DB, 1)
+	summary, err := repository.GetWeeklySummary(ctx, database.DB, user.ID)
 	if err != nil {
-		log.Printf("[ERROR] Scribe engine summary parser failure: %v", err)
+		log.Printf("[ERROR] Scribe engine summary parser failure for user %d: %v", user.ID, err)
 		http.Error(w, "Failed to load historical archives from The Chronicle", http.StatusInternalServerError)
 		return
 	}
@@ -239,7 +273,7 @@ func HandleViewChronicle(w http.ResponseWriter, r *http.Request) {
 		summary.Report = report
 	}
 
-	log.Printf("[REALTIME] Fetching historic ledger archives for weekly review window")
+	log.Printf("[REALTIME] Fetching historic ledger archives for weekly review window (User %d)", user.ID)
 	RenderTemplate(w, "chronicle", summary)
 }
 
@@ -294,6 +328,13 @@ func ImportQuestsAPIHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[REALTIME] Inbound JSON manifest received")
 
+	ctx := r.Context()
+	user, ok := middleware.GetUserFromContext(ctx)
+	userID := 1
+	if ok {
+		userID = user.ID
+	}
+
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("[ERROR] Payload read fault on /api/v1/quests/import: %v", err)
@@ -314,9 +355,8 @@ func ImportQuestsAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Execute transactional batch import
-	userID := 1 // Default primary user scope
-	result, err := ingest.ExecuteBatchIngestion(r.Context(), database.DB, userID, extractedQuests)
+	// 2. Execute transactional batch import bound to session user
+	result, err := ingest.ExecuteBatchIngestion(ctx, database.DB, userID, extractedQuests)
 	if err != nil {
 		log.Printf("[ERROR] Batch transaction execution failed: %v", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -344,6 +384,13 @@ func AnalyzeImportAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+	user, ok := middleware.GetUserFromContext(ctx)
+	userID := 1
+	if ok {
+		userID = user.ID
+	}
+
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -362,8 +409,8 @@ func AnalyzeImportAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch current database categories
-	existingCategories, err := repository.GetCategories(r.Context(), database.DB)
+	// Fetch current database categories for the session user + household
+	existingCategories, err := repository.GetCategories(ctx, database.DB, userID)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -411,15 +458,20 @@ func AnalyzeImportAPIHandler(w http.ResponseWriter, r *http.Request) {
 // HandleSettings renders the admin dashboard view.
 func HandleSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	categories, err := repository.GetCategories(ctx, database.DB)
-	if err != nil {
-		log.Printf("[ERROR] Settings layer failed loading active category metadata: %v", err)
+	user, ok := middleware.GetUserFromContext(ctx)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
 	}
 
-	quests, err := repository.GetActiveQuests(ctx, database.DB, 1, false)
+	categories, err := repository.GetCategories(ctx, database.DB, user.ID)
 	if err != nil {
-		log.Printf("[ERROR] Settings layer failed loading quest configuration registry: %v", err)
+		log.Printf("[ERROR] Settings layer failed loading active category metadata for user %d: %v", user.ID, err)
+	}
+
+	quests, err := repository.GetActiveQuests(ctx, database.DB, user.ID, false)
+	if err != nil {
+		log.Printf("[ERROR] Settings layer failed loading quest configuration registry for user %d: %v", user.ID, err)
 	}
 
 	data := repository.SettingsPageData{
@@ -427,7 +479,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 		Quests:     quests,
 	}
 
-	log.Printf("[REALTIME] Rendering Administrative Settings Panel")
+	log.Printf("[REALTIME] Rendering Administrative Settings Panel for User %d (%s)", user.ID, user.Name)
 	RenderTemplate(w, "settings", data)
 }
 
