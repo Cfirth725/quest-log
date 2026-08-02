@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -30,7 +31,7 @@ type IngestBatchResult struct {
 // ====================================================================
 
 // ExecuteBatchIngestion processes a slice of ExtractedQuest records within a single atomic database transaction.
-func ExecuteBatchIngestion(ctx context.Context, db *sql.DB, ownerID int, quests []ExtractedQuest) (IngestBatchResult, error) {
+func ExecuteBatchIngestion(ctx context.Context, db *sql.DB, defaultOwnerID int, quests []ExtractedQuest) (IngestBatchResult, error) {
 	log.Printf("[INIT] Initializing batch transaction sweep for %d quest record(s)...", len(quests))
 
 	var result IngestBatchResult
@@ -48,16 +49,23 @@ func ExecuteBatchIngestion(ctx context.Context, db *sql.DB, ownerID int, quests 
 	}
 	defer tx.Rollback()
 
-	log.Printf("[REALTIME] Building category registry map within active transaction scope...")
+	log.Printf("[REALTIME] Building category and user registry maps within active transaction scope...")
 
-	// Cache category map (Name -> ID) to avoid redundant SELECTs within the batch cycle
+	// Cache category map (Name -> ID)
 	categoryMap, err := loadCategoryMapTx(ctx, tx)
 	if err != nil {
 		log.Printf("[ERROR] System cache fault: category map construction aborted: %v", err)
 		return result, fmt.Errorf("cache error: failed to build category registry map: %w", err)
 	}
 
-	log.Printf("[REALTIME] Processing %d payload records through category resolution & SQL execution...", len(quests))
+	// Cache user map (Name -> ID) for case-insensitive owner resolution
+	userMap, err := loadUserMapTx(ctx, tx)
+	if err != nil {
+		log.Printf("[ERROR] System cache fault: user map construction aborted: %v", err)
+		return result, fmt.Errorf("cache error: failed to build user registry map: %w", err)
+	}
+
+	log.Printf("[REALTIME] Processing %d payload records through category/owner resolution & SQL execution...", len(quests))
 
 	for _, q := range quests {
 		categoryID, created, err := resolveCategoryIDTx(ctx, tx, categoryMap, q.CategoryName)
@@ -69,6 +77,9 @@ func ExecuteBatchIngestion(ctx context.Context, db *sql.DB, ownerID int, quests 
 			result.CategoriesCreated++
 		}
 
+		// Dynamically resolve owner (ID or Name case-insensitive)
+		resolvedOwnerID := resolveOwnerID(q.OwnerRaw, userMap, defaultOwnerID)
+
 		insertQuery := `
 			INSERT INTO quests (
 				title, category_id, difficulty, base_xp, is_non_negotiable, 
@@ -77,7 +88,7 @@ func ExecuteBatchIngestion(ctx context.Context, db *sql.DB, ownerID int, quests 
 
 		_, err = tx.ExecContext(ctx, insertQuery,
 			q.Title, categoryID, q.Difficulty, q.BaseXP, q.IsNonNegotiable,
-			ownerID, q.QuestType, q.RepeatIntervalDays, q.ResetDayOfWeek,
+			resolvedOwnerID, q.QuestType, q.RepeatIntervalDays, q.ResetDayOfWeek,
 		)
 		if err != nil {
 			log.Printf("[ERROR] DAO execution fault: failed inserting quest record '%s': %v", q.Title, err)
@@ -101,7 +112,7 @@ func ExecuteBatchIngestion(ctx context.Context, db *sql.DB, ownerID int, quests 
 }
 
 // ====================================================================
-// -- CATEGORY RESOLUTION & DAO HELPER FUNCTIONS --
+// -- CATEGORY & OWNER RESOLUTION DAO HELPER FUNCTIONS --
 // ====================================================================
 
 // loadCategoryMapTx fetches existing active categories and returns a case-insensitive lookup map.
@@ -122,6 +133,63 @@ func loadCategoryMapTx(ctx context.Context, tx *sql.Tx) (map[string]int, error) 
 		categoryMap[name] = id
 	}
 	return categoryMap, nil
+}
+
+// loadUserMapTx fetches active users and populates a case-insensitive name-to-ID lookup map.
+func loadUserMapTx(ctx context.Context, tx *sql.Tx) (map[string]int, error) {
+	rows, err := tx.QueryContext(ctx, "SELECT id, LOWER(name) FROM users")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	userMap := map[string]int{
+		"household": 0,
+		"shared":    0,
+		"home":      0,
+	}
+
+	for rows.Next() {
+		var id int
+		var name string
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, err
+		}
+		userMap[name] = id
+	}
+	return userMap, nil
+}
+
+// resolveOwnerID evaluates incoming owner input (int, float64, or string) against database users.
+func resolveOwnerID(rawOwner interface{}, userMap map[string]int, defaultOwnerID int) int {
+	if rawOwner == nil {
+		return defaultOwnerID
+	}
+
+	switch v := rawOwner.(type) {
+	case float64:
+		return int(v)
+	case int:
+		return v
+	case string:
+		clean := strings.TrimSpace(v)
+		if clean == "" {
+			return defaultOwnerID
+		}
+
+		// Try numeric string parse first ("1", "2", "0")
+		if num, err := strconv.Atoi(clean); err == nil {
+			return num
+		}
+
+		// Case-insensitive lookup against registered names
+		lookup := strings.ToLower(clean)
+		if matchedID, found := userMap[lookup]; found {
+			return matchedID
+		}
+	}
+
+	return defaultOwnerID
 }
 
 // resolveCategoryIDTx returns the ID for a category name, creating it on-the-fly if it does not exist.

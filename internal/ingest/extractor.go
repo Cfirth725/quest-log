@@ -22,9 +22,10 @@ import (
 type RawQuestPayload struct {
 	Title              string      `json:"title"`
 	Category           string      `json:"category"`
-	Difficulty         interface{} `json:"difficulty"` // Accepts flexible inputs: string ("easy") or int (1)
+	Difficulty         interface{} `json:"difficulty"` // Flexible input: string ("easy") or int (1)
 	QuestType          string      `json:"quest_type"` // "One-Time", "Daily", "Repeating", "Weekly"
 	IsNonNegotiable    bool        `json:"is_non_negotiable"`
+	Owner              interface{} `json:"owner,omitempty"` // Flexible input: int (1, 0), string ("Carolyn", "Household")
 	RepeatIntervalDays *int64      `json:"repeat_interval_days,omitempty"`
 	ResetDayOfWeek     *int        `json:"reset_day_of_week,omitempty"`
 }
@@ -37,6 +38,7 @@ type ExtractedQuest struct {
 	BaseXP             int
 	QuestType          string
 	IsNonNegotiable    int
+	OwnerRaw           interface{} // Passed down to batch layer for resolution against active user IDs/Names
 	RepeatIntervalDays sql.NullInt64
 	ResetDayOfWeek     int
 }
@@ -131,12 +133,15 @@ func ValidateAndConvert(raw RawQuestPayload) (ExtractedQuest, error) {
 		result.IsNonNegotiable = 0
 	}
 
-	// 6. Handle Repeating Interval bounds
+	// 6. Preserve Raw Owner pointer for resolution against active users/names
+	result.OwnerRaw = raw.Owner
+
+	// 7. Handle Repeating Interval bounds
 	if result.QuestType == "Repeating" && raw.RepeatIntervalDays != nil && *raw.RepeatIntervalDays > 0 {
 		result.RepeatIntervalDays = sql.NullInt64{Int64: *raw.RepeatIntervalDays, Valid: true}
 	}
 
-	// 7. Handle Weekly Reset Day index mapping (0 = Sunday ... 6 = Saturday)
+	// 8. Handle Weekly Reset Day index mapping (0 = Sunday ... 6 = Saturday)
 	if result.QuestType == "Weekly" && raw.ResetDayOfWeek != nil {
 		if *raw.ResetDayOfWeek >= 0 && *raw.ResetDayOfWeek <= 6 {
 			result.ResetDayOfWeek = *raw.ResetDayOfWeek

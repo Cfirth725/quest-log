@@ -30,13 +30,14 @@
                 <textarea 
                     id="json-payload" 
                     name="payload" 
-                    rows="12" 
+                    rows="14" 
                     placeholder='[
   {
     "title": "QUEST TITLE",
     "category": "QUEST CATEGORY",
     "difficulty": "QUEST DIFFICULTY LEVEL",
     "quest_type": "QUEST TYPE",
+    "owner": "User or Household",
     "is_non_negotiable": true or false
   }
 ]' 
@@ -65,6 +66,7 @@
             <li><code>category</code> <span>(Optional) Interactive mapping modal</span></li>
             <li><code>difficulty</code> <span>"easy" (1XP), "medium" (5XP), "hard" (10XP)</span></li>
             <li><code>quest_type</code> <span>"One-Time", "Daily", "Repeating", "Weekly"</span></li>
+            <li><code>owner</code> <span>(Optional) Name string ("User") or 0 ("Household")</span></li>
             <li><code>is_non_negotiable</code> <span>Boolean (Priority Shield)</span></li>
         </ul>
     </aside>
@@ -80,7 +82,7 @@
         </div>
 
         <div id="resolution-rows-container" style="margin: 1.5rem 0; max-height: 350px; overflow-y: auto;">
-            </div>
+        </div>
 
         <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
             <button type="button" onclick="closeResolutionModal()" class="complete-btn">Cancel</button>
@@ -105,6 +107,7 @@ const GEMINI_SYSTEM_PROMPT = `You are a Quest Master task generator. Convert the
     "category": "Category Name (e.g., DevOps, Health, Writing)",
     "quest_type": "One-Time | Daily | Repeating | Weekly",
     "difficulty": "easy | medium | hard",
+    "owner": "Name or 'Household' (Optional, defaults to active user)",
     "is_non_negotiable": false
   }
 ]
@@ -113,8 +116,9 @@ Rules:
 1. "category": Must use the key "category" (NOT "category_name").
 2. "difficulty": Must be "easy" (1 XP), "medium" (5 XP), or "hard" (10 XP).
 3. "quest_type": Must be "One-Time", "Daily", "Repeating", or "Weekly".
-4. "is_non_negotiable": Set to true ONLY if it is a critical must-do task for today.
-5. Return ONLY valid JSON inside a \`\`\`json codeblock. No extra markdown explanations.`;
+4. "owner": Use user name string (case-insensitive) or "Household" / "Shared" for shared tasks.
+5. "is_non_negotiable": Set to true ONLY if it is a critical must-do task for today.
+6. Return ONLY valid JSON inside a \`\`\`json codeblock. No extra markdown explanations.`;
 
 async function initiateManifestAnalysis(event) {
     event.preventDefault();
