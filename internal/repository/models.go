@@ -30,12 +30,14 @@ type QuestResponse struct {
 // ForgeData serves as a transport object for populating quest creation forms.
 // It bundles available categories and users to provide a unified context for the UI.
 type ForgeData struct {
+	User       *User
 	Categories []Category
 	Users      []User
 }
 
 // SettingsPageData aggregates management layouts for the administrative view.
 type SettingsPageData struct {
+	User       *User
 	Categories []Category
 	Quests     []QuestResponse
 }
@@ -80,6 +82,7 @@ type Session struct {
 // ChronicleSummary provides an aggregated view of user performance metrics
 // over a rolling window (typically 7 days), used for the "The Chronicle" review engine.
 type ChronicleSummary struct {
+	User       *User
 	TotalXP    int
 	QuestCount int
 	RecentWins []QuestCompletionRow

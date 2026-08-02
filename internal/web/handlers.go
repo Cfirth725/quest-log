@@ -99,6 +99,7 @@ func HandleNewQuest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := repository.ForgeData{
+		User:       user,
 		Categories: categories,
 		Users:      users,
 	}
@@ -266,6 +267,8 @@ func HandleViewChronicle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	summary.User = user
+
 	report, err := repository.GenerateWeeklyChronicleReport(ctx, database.DB)
 	if err != nil {
 		log.Printf("[ERROR] Chronicle metrics evaluation execution block: %v", err)
@@ -309,9 +312,13 @@ func RenderScriptoriumHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[REALTIME] Serving Arcane Scriptorium interface")
 
+	user, _ := middleware.GetUserFromContext(r.Context())
+
 	data := struct {
+		User  *repository.User
 		Title string
 	}{
+		User:  user,
 		Title: "The Arcane Scriptorium",
 	}
 
@@ -475,6 +482,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := repository.SettingsPageData{
+		User:       user,
 		Categories: categories,
 		Quests:     quests,
 	}

@@ -22,8 +22,11 @@
             <label for="owner_id">Assign To</label>
             <select id="owner_id" name="owner_id">
                 <option value="0">🏠 Household (Shared)</option>
+                {{ $currentUser := .User }}
                 {{ range .Users }}
-                    <option value="{{ .ID }}">{{ .Name }}</option>
+                    <option value="{{ .ID }}" {{ if and $currentUser (eq .ID $currentUser.ID) }}selected{{ end }}>
+                        {{ .Name }}
+                    </option>
                 {{ end }}
             </select>
         </div>
