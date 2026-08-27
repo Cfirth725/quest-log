@@ -31,7 +31,7 @@ Quest Log functions as a modular web application and headless API server. By rep
                      │            data/quests.db              │
                      │      (SQLite3 Engine • WAL Mode)       │
                      └────────────────────────────────────────┘
-````
+```
 
 ## ⚡ Task Lifecycle Processing & Telemetry Ingestion
 ```
@@ -72,19 +72,19 @@ Quest Log functions as a modular web application and headless API server. By rep
 ```
 
 ## ✨ Core Philosophy & Engineering Constraints
-1. **Low-Contrast Visual Architecture:** Built explicitly around a custom-tuned, light-absorbing dark mode canvas (`#12161F` and `#1E2533`). By abandoning high-contrast white text flashes and intense neon saturation, the system layout drastically limits cognitive eye strain and prevents visual vibration during barometric pressure swings.
+1. **Low-Contrast Visual Architecture:** Built explicitly around a custom-tuned, light-absorbing dark mode canvas (`#12161F` and `#1E2533`) paired with a warm, low-glare Parchment light mode (`#F4EFE6`). The system layout minimizes cognitive fatigue and eliminates harsh contrast flashes during state transitions.
 2. **Multi-User & Shared Household Scoping:** Fully supports isolated participant profiles alongside shared `0 (Household)` contracts. Tasks and category taxonomies dynamically filter to show personal bounties alongside shared household objectives (`owner_id IN (?, 0)`).
 3. **Session-Based Security Architecture:** Lightweight PIN authentication gateway using salted `bcrypt` password hashing paired with cryptographically secure 32-byte session tokens stored in SQLite. Tokens are delivered via secure `HttpOnly` browser cookies and injected into request contexts (`r.Context()`) via middleware.
 4. **The Hard-Coded Economy:** Eliminates arbitrary point value inflation. Task rewards are strictly compressed to static server-evaluated integers ($1$, $5$, $10$), ensuring long-term ledger consistency.
 5. **Strategic Momentum Triage:** Implements an immediate frontend filter toggle ("Momentum Mode"). When active, the query engine limits database scanning outputs exclusively to `is_non_negotiable` tasks, lowering the interface cognitive load down to zero during tight windows.
-6. **Flex-Owner Bulk Ingestion Engine:** The Arcane Scriptorium accepts raw JSON manifests featuring flexible owner specifications—resolving integer IDs, case-insensitive user names (`"User"`), or shared keywords (`"Household"`, `"Shared"`) seamlessly during batch imports.
+6. **Flex-Owner Bulk Ingestion Engine:** The Arcane Scriptorium accepts raw JSON manifests featuring flexible owner specifications—resolving integer IDs, case-insensitive user names, or shared keywords (`"Household"`, `"Shared"`) seamlessly during batch imports.
 7. **Structured DevOps Telemetry:** Employs explicit, machine-readable console visual tracking wrappers (`[INIT]`, `[SECURE]`, `[OK]`, `[ERROR]`, `[REALTIME]`) to ensure clean terminal observation under container runtimes.
 
 ## 🛠️ Tech Stack & Runtime
 - **Language Runtime:** Go 1.24+ (Native structured templates, type-safe error propagation, Go 1.22+ enhanced `net/http` routing, and context-aware database bindings)
 - **Database Engine:** SQLite 3 via `github.com/mattn/go-sqlite3` operating under Write-Ahead Logging (`WAL` mode)
 - **Security & Authentication:** `golang.org/x/crypto/bcrypt`, `crypto/rand` session generation, `HttpOnly` cookies
-- **Design System:** Vanilla CSS3 (Centralized Design Tokens) 
+- **Design System:** Vanilla CSS3 (Centralized Design Tokens)
 - **Orchestration Matrix:** Docker Multi-stage Linux Build
 
 ## 🗺️ Execution Roadmap
@@ -106,10 +106,10 @@ Quest Log functions as a modular web application and headless API server. By rep
 #### **Phase 4: Focus Telemetry & Visual Refactor (COMPLETED)**
 - [x] **Muted Obsidian Theme:** Deploy a low-contrast, custom dark mode interface across all layout files to prevent cognitive fatigue and eye strain.
 - [x] **Active View Triage Toggle:** Connect the frontend **"Momentum Mode"** switch to a URL query parameter filtration mechanism that hides standard targets under high-pressure scenarios.
-- [x] **Cache Shielding:** Apply version parameter strings (`style.css?v=3.0.4`) to elements to cleanly bypass aggressive local browser stylesheet caching bugs.
+- [x] **Cache Shielding:** Apply version parameter strings (`style.css?v=3.1.4`) to elements to cleanly bypass aggressive local browser stylesheet caching bugs.
 
 #### **Phase 5: Storage Optimization & Maintenance (COMPLETED)**
-- [x] **Engine Hygiene:** Automated `db.Exec("VACUUM")` database compaction routines to claim unallocated disk sectors after data purging.
+- [x] **Engine Hygiene:** Automated `db.Exec("VACUUM")` database compaction routines to claim unallocated disk sectors after data purging. 
 - [x] **Data Pruning Ledger:** Background utility to safely purge historical logs from `quest_completions` older than a defined retention window (e.g., 14 days) to permanently limit SQLite file bloat.
 - [x] **Automated Disaster Recovery:** Lightweight cron routine to create timestamped, compressed backups (`tar.gz`) of the SQLite database file, keeping a rolling window of copies stored safely outside the live container volume.
 - [x] **Graceful Teardown Loop:** Configure system lifecycle interrupt interceptors (`SIGINT`, `SIGTERM`) to force connection pool checkpoints, ensuring SQLite cleanly collapses WAL files back to disk on container exits.
@@ -122,13 +122,14 @@ Quest Log functions as a modular web application and headless API server. By rep
 - [x] **The Arcane Scriptorium:** Build a file-based JSON bulk-importer (`/scriptorium`) with real-time pre-flight category mapping analysis and batch transactional ingestion.
 - [x] **Headless Telemetry Endpoint:** Secure `/api/v1/telemetry` with zero-trust API key middleware to export live workload counts, daily XP disbursements, and category breakdowns for external consumption.
 
-#### **Phase 8: Multi-User Architecture & Personalization (In Progress)**
+#### **Phase 8: Multi-User Architecture & Personalization (COMPLETED)**
 - [x] **Session Authentication Layer:** Implement a lightweight, secure session state manager (`sessions` table + `SessionAuth` middleware) to protect individual dashboard profiles using PIN authentication.
 - [x] **User-Scoped Query Scoping:** Update repository queries to scope task visibility (`owner_id IN (?, 0)`), category management, and XP completion gains directly to the active session user.
-- [x] **Flexible Ingestion Owner Resolution:** Enable case-insensitive owner name matching (`"User"`, `"Household"`) inside the Arcane Scriptorium bulk ingestion pipeline.
-- [x] **Character UI Badge & Navigation:** Add an embedded medieval wizard character badge (🧙) displaying active profile credentials and a streamlined exit portal.
-- [ ] **Dynamic Interface Swapping:** Finalize native design token flags to support clean switching to alternative styles (like a future `style_light.css`) seamlessly from the web interface.
+- [x] **Flexible Ingestion Owner Resolution:** Enable case-insensitive owner name matching inside the Arcane Scriptorium bulk ingestion pipeline.
+- [x] **Character UI Badge & Utility Island:** Deploy a unified top-level utility control badge (Theme switcher, User identity badge, and Logout portal).
+- [x] **Dynamic Interface Swapping:** Implement an instant, anti-flash theme engine supporting both Muted Obsidian (Dark) and warm Parchment (Light) palettes persisted in `localStorage`.
 
-#### **Phase 9: Advanced Environmental Integrations (PLANNED)**
-- [ ] **Pre-Flight Gear Check Lock:** Design conditional contract gating where active bounties remain locked out in the UI until explicit pre-requisite check toggles are verified.
-- [ ] **Atmospheric Automation Trigger:** Integrate local background telemetry daemons with your custom `Barometric Guard` API to automatically signal the application to suggest turning on **Momentum Mode** during severe pressure drops.
+#### **Phase 9: Workflow Automation & Advanced Capabilities (PLANNED)**
+- [ ] **Pre-Flight Subtask Checklist Lock:** Implement prerequisite checklist steps within complex bounties, locking completion until all itemized subtasks are marked ready.
+- [ ] **Export & Data Portability Suite:** Provide single-click JSON/CSV export endpoints for personal Chronicle histories and active quest boards to facilitate external analytics.
+- [ ] **Custom Webhook Dispatcher:** Add an event-driven webhook subsystem to emit JSON payloads (e.g., Discord/Gotify notifications) when high-tier bounties or weekly targets are achieved.
