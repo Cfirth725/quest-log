@@ -34,9 +34,11 @@ func RenderLoginPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
+		User  *repository.User
 		Users []repository.User
 		Error string
 	}{
+		User:  nil,
 		Users: users,
 		Error: r.URL.Query().Get("error"),
 	}
