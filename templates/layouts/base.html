@@ -1,16 +1,27 @@
 {{ define "base" }}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quest Log: {{ block "title" . }}System{{ end }}</title>
-    <link rel="stylesheet" href="/static/style.css?v=3.0.4">
+
+    <!-- Anti-Flash Theme Engine Initialization -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('questlog_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+
+    <link rel="stylesheet" href="/static/style.css?v=3.1.4">
 </head>
 <body>
     <nav>
         <div class="container nav-flex">
-            <div style="font-size: 1.2rem; font-weight: bold; color: var(--text-primary);">🌿 The Quest Log</div>
+            <div style="font-size: 1.25rem; font-weight: bold; color: var(--text-primary); white-space: nowrap;">
+                🌿 The Quest Log
+            </div>
             
             <div class="nav-links">
                 <a href="/">Bounty Board</a>
@@ -19,29 +30,57 @@
                 <a href="/scriptorium">Scriptorium</a>
                 <a href="/settings">Settings</a>
             </div>
-
-            {{if .User}}
-            <div class="user-identity-badge" style="display: flex; align-items: center; gap: 0.75rem; background: rgba(255, 255, 255, 0.05); padding: 0.35rem 0.85rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.2;">
-                    <span style="font-size: 1.1rem; display: block; text-align: center;">🧙</span>
-                    <span style="font-weight: 600; font-size: 0.8rem; color: var(--text-primary, #e2e8f0); letter-spacing: 0.02em;">{{.User.Name}}</span>
-                </div>
-
-                <form action="/logout" method="POST" style="margin: 0; display: flex; align-items: center;">
-                    <button type="submit" title="Leave Guild / Sign out" style="background: none; border: none; color: #888; cursor: pointer; padding: 0.2rem; font-size: 0.9rem; transition: color 0.2s;" onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='#888'">
-                        🚪 Leave
-                    </button>
-                </form>
-            </div>
-            {{end}}
         </div>
     </nav>
 
     <main class="container">
+        {{if .User}}
+        <!-- Centered Utility & Identity Control Bar -->
+        <div style="display: flex; justify-content: center; margin-bottom: 1.75rem;">
+            <div class="user-identity-badge" style="display: inline-flex; align-items: center; justify-content: center; gap: 1.25rem; background: var(--card-bg); padding: 0.45rem 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);">
+                
+                <!-- Theme Toggle: Stacked Icon + Label -->
+                <button id="themeToggleBtn" onclick="toggleTheme()" title="Switch Theme" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; flex-direction: column; align-items: center; line-height: 1.2;">
+                    <span style="font-size: 1.1rem; display: block;">🌓</span>
+                    <span style="font-weight: 600; font-size: 0.75rem; color: var(--text-secondary); letter-spacing: 0.02em;">Theme</span>
+                </button>
+
+                <div style="width: 1px; height: 22px; background: var(--border-color);"></div>
+
+                <!-- User Identity: Stacked Icon + Name -->
+                <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.2;">
+                    <span style="font-size: 1.1rem; display: block;">🧙</span>
+                    <span style="font-weight: 600; font-size: 0.75rem; color: var(--text-primary); letter-spacing: 0.02em;">{{.User.Name}}</span>
+                </div>
+
+                <div style="width: 1px; height: 22px; background: var(--border-color);"></div>
+
+                <!-- Logout Exit: Stacked Icon + Label -->
+                <form action="/logout" method="POST" style="margin: 0;">
+                    <button type="submit" title="Leave Guild / Sign out" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; flex-direction: column; align-items: center; line-height: 1.2;">
+                        <span style="font-size: 1.1rem; display: block;">🚪</span>
+                        <span style="font-weight: 600; font-size: 0.75rem; color: var(--text-secondary); letter-spacing: 0.02em;" onmouseover="this.style.color='var(--momentum-red)'" onmouseout="this.style.color='var(--text-secondary)'">Leave</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {{end}}
+
         {{ template "content" . }}
     </main>
 
     <footer>I'm not procrastinating... I'm doing side quests!</footer>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme') || 'dark';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', nextTheme);
+            localStorage.setItem('questlog_theme', nextTheme);
+        }
+    </script>
 </body>
 </html>
 {{ end }}

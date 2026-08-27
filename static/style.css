@@ -1,33 +1,78 @@
 /* ================================================================
    THE QUEST LOG DESIGN SYSTEM
-   Theme: Low-Contrast "Muted Obsidian" Dark Mode
-   Version: 3.0 (Migraine-Safe Performance Architecture)
-   Updated: July 2026
+   Theme: Dynamic Tokens (Muted Obsidian Dark / Parchment Light)
+   Version: 3.1 (Migraine-Safe Performance Architecture)
+   Updated: August 2026
 ================================================================ 
 */
 
-/* --- 1. GLOBAL TOKENS & DESIGN SYSTEM VARIABLES --- */
-:root {
+/* --- 1. GLOBAL TOKENS & THEME SURFACES --- */
+:root,
+[data-theme="dark"] {
     /* Main Color Space Surfaces */
     --bg-color: #12161F;          /* Deep midnight canvas - light absorbing */
     --card-bg: #1E2533;           /* Muted slate card surface */
+    --input-bg: #12161F;          /* Recessed input surface */
+    --footer-bg: #0D1117;         /* Deep grounding footer */
     --border-color: #2D3748;      /* Low-contrast divider boundary */
+    --card-hover-border: #4A5568; /* Subtle interaction focus */
+    --modal-backdrop: rgba(18, 22, 31, 0.85);
     
     /* Typography Contrasts */
-    --text-primary: #E2E8F0;      /* Soft ash white to prevent text vibration */
-    --text-secondary: #A0AEC0;    /* Dimmed stone hue for structural details */
+    --text-primary: #E2E8F0;
+    --text-secondary: #A0AEC0;
+    --nav-link-color: #A0AEC0;
+    --nav-link-hover-bg: rgba(255, 255, 255, 0.05);
     
     /* Accents & Rewards */
-    --primary-accent: #9F7AEA;    /* Soft lavender for interaction links */
-    --xp-gold: #D69E2E;           /* Antiqued gold for reward metrics */
-    --momentum-red: #E53E3E;      /* Low-saturation coral for triage indicators */
-    --success-green: #38A169;     /* Deep jade tint for resolution blocks */
+    --primary-accent: #9F7AEA;
+    --xp-gold: #D69E2E;
+    --momentum-red: #E53E3E;
+    --success-green: #38A169;
+
+    /* Buttons & Interactive Elements */
+    --complete-btn-bg: #232D3F;
+    --complete-btn-hover-bg: #2D3748;
+    --complete-btn-color: #CBD5E0;
+    --complete-btn-hover-color: #FFFFFF;
+    --complete-btn-border: rgba(160, 174, 192, 0.2);
 
     /* Layout Geometry Configuration */
     --container-max: 800px;
     --radius-lg: 12px;
     --radius-md: 8px;
     --radius-sm: 4px;
+}
+
+/* --- 1a. LOW-GLARE PARCHMENT WARM LIGHT THEME --- */
+[data-theme="light"] {
+    /* Warm, low-contrast sepia & parchment tones */
+    --bg-color: #F4EFE6;
+    --card-bg: #FFFFFF;
+    --input-bg: #FAF7F2;
+    --footer-bg: #EAE3D2;
+    --border-color: #D6CDBF;
+    --card-hover-border: #B8AC99;
+    --modal-backdrop: rgba(45, 36, 30, 0.65);
+
+    /* Readable warm slate / espresso typography */
+    --text-primary: #2D241E;
+    --text-secondary: #6B5E55;
+    --nav-link-color: #6B5E55;
+    --nav-link-hover-bg: rgba(0, 0, 0, 0.05);
+
+    /* Accents */
+    --primary-accent: #7C3AED;
+    --xp-gold: #B7791F;
+    --momentum-red: #C53030;
+    --success-green: #2F855A;
+
+    /* Interactive Buttons */
+    --complete-btn-bg: #EAE3D2;
+    --complete-btn-hover-bg: #DDD3BF;
+    --complete-btn-color: #2D241E;
+    --complete-btn-hover-color: #1A1410;
+    --complete-btn-border: rgba(107, 94, 85, 0.3);
 }
 
 * {
@@ -45,6 +90,7 @@ body {
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .container { 
@@ -63,6 +109,7 @@ nav {
     border-bottom: 1px solid var(--border-color);
     background-color: var(--card-bg);
     padding: 0.5rem 1rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .nav-flex { 
@@ -79,7 +126,7 @@ nav {
 
 .nav-links a { 
     text-decoration: none; 
-    color: #A0AEC0;
+    color: var(--nav-link-color);
     font-weight: 600;
     font-size: 0.95rem;
     padding: 0.5rem 0.75rem;
@@ -90,7 +137,7 @@ nav {
 
 .nav-links a:hover {
     color: var(--text-primary);
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--nav-link-hover-bg);
 }
 
 footer { 
@@ -98,8 +145,9 @@ footer {
     padding: 1.5rem; 
     font-size: 0.8rem; 
     color: var(--text-secondary); 
-    background: #0D1117; 
+    background: var(--footer-bg); 
     border-top: 1px solid var(--border-color);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 /* --- 4. THE BOUNTY BOARD INTERFACE --- */
@@ -136,12 +184,12 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-    transition: border-color 0.15s ease, transform 0.15s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+    transition: border-color 0.15s ease, transform 0.15s ease, background-color 0.2s ease;
 }
 
 .quest-card:hover {
-    border-color: #4A5568;
+    border-color: var(--card-hover-border);
 }
 
 .quest-accent-bar {
@@ -161,7 +209,7 @@ footer {
 .quest-title { 
     margin: 0; 
     font-size: 1.1rem; 
-    font-weight: 600;
+    font-weight: 600; 
     color: var(--text-primary); 
 }
 
@@ -179,8 +227,8 @@ footer {
 
 /* Lifecycle State: Resolved / Completed View */
 .quest-done {
-    opacity: 0.4;
-    background-color: #1A202C;
+    opacity: 0.45;
+    background-color: var(--bg-color);
     border-style: dashed;
     filter: grayscale(0.6);
     pointer-events: none;
@@ -189,7 +237,7 @@ footer {
 /* --- 6. ATOMIC VISUAL BADGES & REWARDS --- */
 .badge-done {
     background: rgba(56, 161, 105, 0.2);
-    color: #48BB78;
+    color: var(--success-green);
     font-size: 0.7rem;
     font-weight: 700;
     padding: 3px 8px;
@@ -201,7 +249,7 @@ footer {
 
 .badge-must {
     background: rgba(229, 62, 62, 0.15);
-    color: #FEB2B2;
+    color: var(--momentum-red);
     font-size: 0.7rem;
     font-weight: 700;
     padding: 3px 6px;
@@ -221,8 +269,8 @@ footer {
     letter-spacing: 0.05em;
 }
 
-.status-active { background-color: rgba(214, 158, 46, 0.15); color: #F6AD55; }
-.status-done { background-color: rgba(56, 161, 105, 0.15); color: #48BB78; }
+.status-active { background-color: rgba(214, 158, 46, 0.15); color: var(--xp-gold); }
+.status-done { background-color: rgba(56, 161, 105, 0.15); color: var(--success-green); }
 
 .xp-text { 
     color: var(--xp-gold); 
@@ -237,7 +285,7 @@ footer {
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     margin-bottom: 2rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .form-group { margin-bottom: 1.5rem; }
@@ -252,13 +300,13 @@ label {
 input, select, textarea {
     width: 100%;
     padding: 0.75rem;
-    background-color: #12161F;
+    background-color: var(--input-bg);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 1rem; 
     color: var(--text-primary);
     box-sizing: border-box;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.2s ease;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -304,7 +352,7 @@ input:focus, select:focus, textarea:focus {
 
 .editor-card textarea {
     width: 100%;
-    background-color: #12161F;
+    background-color: var(--input-bg);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     font-family: 'Fira Code', 'Courier New', monospace;
@@ -333,13 +381,13 @@ input:focus, select:focus, textarea:focus {
 .banner-ok {
     background-color: rgba(56, 161, 105, 0.15);
     border: 1px solid var(--success-green);
-    color: #68D391;
+    color: var(--success-green);
 }
 
 .banner-error {
     background-color: rgba(229, 62, 62, 0.15);
     border: 1px solid var(--momentum-red);
-    color: #FEB2B2;
+    color: var(--momentum-red);
 }
 
 .schema-hint {
@@ -381,7 +429,7 @@ input:focus, select:focus, textarea:focus {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(18, 22, 31, 0.85);
+    background: var(--modal-backdrop);
     backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
@@ -396,13 +444,13 @@ input:focus, select:focus, textarea:focus {
     width: 90%;
     max-width: 600px;
     padding: 2rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 /* --- 8. BUTTONS & ACTIVE USER INTERACTION --- */
 .submit-btn {
     background: var(--primary-accent);
-    color: #12161F;
+    color: #FFFFFF;
     border: none;
     padding: 1rem;
     font-size: 1.1rem;
@@ -418,35 +466,33 @@ input:focus, select:focus, textarea:focus {
     transform: scale(1.01); 
 }
 
-/* Sleek Dark Slate Resolution Button */
+/* Resolution Button */
 .complete-btn {
-    background: #232D3F; /* Deep steel/slate surface */
-    color: #CBD5E0; /* Soft readable ash-white text */
-    border: 1px solid rgba(160, 174, 192, 0.2); /* Muted silver border frame */
+    background: var(--complete-btn-bg);
+    color: var(--complete-btn-color);
+    border: 1px solid var(--complete-btn-border);
     padding: 0.6rem 1.4rem;
     border-radius: var(--radius-md);
     cursor: pointer;
     font-weight: 700;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
 }
 
 .complete-btn:hover {
-    background: #2D3748;
-    color: #FFFFFF;
-    border-color: rgba(160, 174, 192, 0.4);
-    box-shadow: 0 0 10px rgba(160, 174, 192, 0.15);
+    background: var(--complete-btn-hover-bg);
+    color: var(--complete-btn-hover-color);
+    border-color: var(--text-secondary);
     transform: translateY(-1px);
 }
 
 .complete-btn:active {
     transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Momentum Mode Control / Filter Button (Base - Triage Red) */
+/* Momentum Mode Control / Filter Button */
 .momentum-btn {
-    background: #1E2533;
+    background: var(--card-bg);
     color: var(--momentum-red);
     border: 1px solid rgba(229, 62, 62, 0.4);
     padding: 0.5rem 1.2rem;
@@ -462,7 +508,6 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 8px rgba(229, 62, 62, 0.2);
 }
 
-/* Active Filtration State (Engaged - Glowing Obsidian Blue) */
 .momentum-btn.active-mode {
     background: #1A2438 !important;
     color: #63B3ED !important;
@@ -470,11 +515,10 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 12px rgba(49, 130, 206, 0.4) !important;
 }
 
-.momentum-btn.active-mode:hover {
-    background: #233252 !important;
-    color: #FFFFFF !important;
-    border-color: #63B3ED !important;
-    box-shadow: 0 0 16px rgba(49, 130, 206, 0.6) !important;
+[data-theme="light"] .momentum-btn.active-mode {
+    background: #EBF8FF !important;
+    color: #2B6CB0 !important;
+    border: 1px solid rgba(49, 130, 206, 0.6) !important;
 }
 
 /* --- 9. THE CHRONICLE LEDGER REVIEW --- */
@@ -511,10 +555,14 @@ input:focus, select:focus, textarea:focus {
     color: #63B3ED;
 }
 
+[data-theme="light"] .metric-val-blue {
+    color: #2B6CB0;
+}
+
 .metric-val-green {
     font-size: 2.75rem; 
     font-weight: 700; 
-    color: #48BB78;
+    color: var(--success-green);
 }
 
 .frequency-counter {
@@ -582,20 +630,31 @@ input:focus, select:focus, textarea:focus {
     background-color: var(--dot-color, #ccc); 
 }
 
+.hex-badge {
+    background-color: rgba(160, 174, 192, 0.15);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+    letter-spacing: 0.03em;
+}
+
 .inline-form { display: flex; gap: 12px; align-items: center; }
 .color-picker { width: 64px !important; padding: 2px !important; height: 40px; cursor: pointer; }
 .small-btn { width: auto !important; padding: 0.5rem 1.5rem !important; }
 
 /* --- 11. LAYOUT MOBILE RESPONSIVENESS CAPABILITIES --- */
 @media (max-width: 600px) {
-    /* Stack the logo above the navigation grid */
     .nav-flex {
         flex-direction: column;
         gap: 0.75rem;
         align-items: center;
     }
 
-    /* Convert link container into a clean, tap-friendly 2x2 grid matrix */
     .nav-links {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -664,7 +723,6 @@ input:focus, select:focus, textarea:focus {
         text-align: center;
     }
 
-    /* Scriptorium Mobile Layout Stacking */
     .scriptorium-grid {
         grid-template-columns: 1fr;
     }

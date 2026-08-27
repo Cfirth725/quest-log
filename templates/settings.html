@@ -29,7 +29,7 @@
                         <td>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span class="category-preview-dot" style="--dot-color: {{ .ColorHex }};"></span>
-                                <code style="color: var(--text-secondary); background: #12161F; padding: 2px 6px; border-radius: 4px;">{{ .ColorHex }}</code>
+                                <span class="hex-badge">{{ .ColorHex }}</span>
                             </div>
                         </td>
                         <td>
@@ -62,7 +62,7 @@
                         {{ if ne .QuestType "One-Time" }} 
                         <tr>
                             <td><strong style="color: var(--text-primary);">{{ .Title }}</strong></td>
-                            <td><span class="status-tag status-active" style="background-color: rgba(159, 122, 234, 0.15); color: #B794F4;">{{ .QuestType }}</span></td>
+                            <td><span class="status-tag status-active" style="background-color: rgba(159, 122, 234, 0.15); color: var(--primary-accent);">{{ .QuestType }}</span></td>
                             <td>
                                 <span class="status-tag {{ if eq .Status "completed" }}status-done{{ else }}status-active{{ end }}">
                                     {{ .Status }}
@@ -98,7 +98,7 @@
                     {{ range .Quests }}
                     <tr>
                         <td><strong style="color: var(--text-primary);">{{ .Title }}</strong></td>
-                        <td><span class="status-tag status-active" style="background-color: rgba(159, 122, 234, 0.1) !important; color: #B794F4 !important; border: 1px solid rgba(159, 122, 234, 0.2);">{{ .QuestType }}</span></td>
+                        <td><span class="status-tag status-active" style="background-color: rgba(159, 122, 234, 0.1) !important; color: var(--primary-accent) !important; border: 1px solid rgba(159, 122, 234, 0.2);">{{ .QuestType }}</span></td>
                         <td>
                             <span class="status-tag {{ if eq .Status "completed" }}status-done{{ else }}status-active{{ end }}">
                                 {{ .Status }}
